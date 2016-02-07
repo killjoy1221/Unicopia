@@ -1,0 +1,53 @@
+{
+    "obfuscation": {
+        "classes": [
+            { "id":  "EntityVillager", "mcp": "net.minecraft.entity.passive.EntityVillager", "obf": "agp"},
+            { "id":  "EntityPlayer", "mcp": "net.minecraft.entity.player.EntityPlayer", "obf": "ahd"},
+            { "id":  "AbstractClientPlayer", "mcp": "net.minecraft.client.entity.AbstractClientPlayer", "obf": "cil"},
+            { "id":  "NetworkPlayerInfo", "mcp": "net.minecraft.client.network.NetworkPlayerInfo", "obf": "ces"},
+            { "id":  "EventHandler", "mcp": "com.sollace.unicopia.EventHandler" }
+        ],
+        "methods": [
+            { "id": "interact", "mcp": "interact", "srg": "func_152433_a", "obf": "a" },
+            { "id": "getPlayerInfo", "mcp": "getPlayerInfo", "srg": "func_175155_b", "obf": "b" },
+            { "id": "getSkinType", "mcp": "getSkinType", "srg": "func_175154_l", "obf": "l" }
+        ]
+    },
+    "descriptors": [
+        { "id": "interact", "owner": "${EntityVillager}", "name": "${interact}", "return": "BOOLEAN", "args": [ "${EntityPlayer}" ] },
+        { "id": "onVillagerInteract", "owner": "${EventHandler}", "name": "onVillagerInteract" },
+        { "id": "getSkinType", "owner": "${AbstractClientPlayer}", "name": "${getSkinType}", "return": "STRING" },
+        { "id": "getPlayerInfo", "owner": "${AbstractClientPlayer}", "name": "${getPlayerInfo}", "return": "${NetworkPlayerInfo}"},
+        { "id": "onGetSkinType", "owner": "${EventHandler}", "name": "onGetSkinType" },
+        { "id": "onGetPlayerInfo", "owner": "${EventHandler}", "name": "onGetPlayerInfo" }
+    ],
+    "events": [
+        {
+            "name": "onVillagerInteract",
+            "cancellable": "true",
+            "injections": [{
+                "type": "HEAD",
+                "method": "${interact}"
+            }],
+            "listeners": [ "${onVillagerInteract}" ]
+        },
+        {
+        	"name": "onGetPlayerInfo",
+        	"cancellable": "true",
+        	"injections": [{
+        		"type": "HEAD",
+        		"method": "${getPlayerInfo}"
+        	}],
+        	"listeners": [ "${onGetPlayerInfo}" ]
+        },
+        {
+        	"name": "onGetSkinType",
+        	"cancellable": "true",
+        	"injections": [{
+        		"type": "HEAD",
+        		"method": "${getSkinType}"
+        	}],
+        	"listeners": [ "${onGetSkinType}" ]
+        }
+    ]
+}
