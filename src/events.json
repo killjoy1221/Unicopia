@@ -5,12 +5,14 @@
             { "id":  "EntityPlayer", "mcp": "net.minecraft.entity.player.EntityPlayer", "obf": "ahd"},
             { "id":  "AbstractClientPlayer", "mcp": "net.minecraft.client.entity.AbstractClientPlayer", "obf": "cil"},
             { "id":  "NetworkPlayerInfo", "mcp": "net.minecraft.client.network.NetworkPlayerInfo", "obf": "ces"},
+            { "id":  "EnumPlayerModelParts", "mcp": "net.minecraft.entity.player.EnumPlayerModelParts", "obf": "" },
             { "id":  "EventHandler", "mcp": "com.sollace.unicopia.EventHandler" }
         ],
         "methods": [
             { "id": "interact", "mcp": "interact", "srg": "func_152433_a", "obf": "a" },
             { "id": "getPlayerInfo", "mcp": "getPlayerInfo", "srg": "func_175155_b", "obf": "b" },
-            { "id": "getSkinType", "mcp": "getSkinType", "srg": "func_175154_l", "obf": "l" }
+            { "id": "getSkinType", "mcp": "getSkinType", "srg": "func_175154_l", "obf": "l" },
+            { "id": "isWearing", "mcp": "isWearing", "srg": "", "obf": "" }
         ]
     },
     "descriptors": [
@@ -18,8 +20,10 @@
         { "id": "onVillagerInteract", "owner": "${EventHandler}", "name": "onVillagerInteract" },
         { "id": "getSkinType", "owner": "${AbstractClientPlayer}", "name": "${getSkinType}", "return": "STRING" },
         { "id": "getPlayerInfo", "owner": "${AbstractClientPlayer}", "name": "${getPlayerInfo}", "return": "${NetworkPlayerInfo}"},
+        { "id": "isWearing", "owner": "${EntityPlayer}", "name": "${isWearing}", "return": "BOOLEAN", "args": [ "${EnumPlayerModelParts}" ] },
         { "id": "onGetSkinType", "owner": "${EventHandler}", "name": "onGetSkinType" },
-        { "id": "onGetPlayerInfo", "owner": "${EventHandler}", "name": "onGetPlayerInfo" }
+        { "id": "onGetPlayerInfo", "owner": "${EventHandler}", "name": "onGetPlayerInfo" },
+        { "id": "onIsWearing", "owner": "${EventHandler}", "name": "onIsWearing" }
     ],
     "events": [
         {
@@ -48,6 +52,15 @@
         		"method": "${getSkinType}"
         	}],
         	"listeners": [ "${onGetSkinType}" ]
+        },
+        {
+        	"name": "onIsWearing",
+        	"cancellable": "true",
+        	"injections": [{
+        		"type": "HEAD",
+        		"method": "${isWearing}"
+        	}],
+        	"listeners": [ "${onIsWearing}" ]
         }
     ]
 }

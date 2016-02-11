@@ -1,12 +1,15 @@
 package com.sollace.unicopia.disguise;
 
 import com.blazeloader.util.data.INBTWritable;
-import com.sollace.util.PlayerIdent;
+import com.blazeloader.util.playerinfo.PlayerIdent;
+import com.sollace.unicopia.server.PlayerSpeciesRegister;
 
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityFlying;
 import net.minecraft.entity.EntityList;
 import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.entity.boss.EntityDragon;
 import net.minecraft.entity.monster.EntityEnderman;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
@@ -21,7 +24,7 @@ public class Disguise implements INBTWritable {
 	public void set(EntityPlayer player, EntityLivingBase entity) {
 		if (entity instanceof EntityPlayer) {
 			disguiseEntity = null;
-			disguisePlayer = new PlayerIdent((EntityPlayer)entity);
+			disguisePlayer = PlayerIdent.create((EntityPlayer)entity);
 		} else {
 			disguisePlayer = null;
 			if (entity == null) {
@@ -95,6 +98,13 @@ public class Disguise implements INBTWritable {
 		return disguiseEntity != null || isPlayer();
 	}
 	
+	public boolean canFly() {
+		if (isPlayer()) {
+			return PlayerSpeciesRegister.getPlayerSpecies(getPlayer().getUniqueID()).canFly();
+		}
+		return disguiseEntity == null || disguiseEntity instanceof EntityFlying || disguiseEntity instanceof EntityDragon;
+	}
+	
 	public boolean match(Entity looked) {
 		if (looked == null && isActive()) return false;
 		if (looked instanceof EntityPlayer && isPlayer()) {
@@ -119,8 +129,7 @@ public class Disguise implements INBTWritable {
 			disguisePlayer = null;
 		} else {
 			disguiseEntity = null;
-			disguisePlayer = new PlayerIdent();
-			disguisePlayer.readFromNBT(compound);
+			disguisePlayer = PlayerIdent.create(compound);
 		}
 	}
 }

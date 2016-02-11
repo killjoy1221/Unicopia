@@ -6,6 +6,7 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.passive.EntityVillager;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.entity.player.EnumPlayerModelParts;
 import net.minecraft.item.ItemFood;
 import net.minecraft.item.ItemStack;
 import net.minecraft.potion.Potion;
@@ -13,7 +14,7 @@ import net.minecraft.potion.PotionEffect;
 import net.minecraft.stats.StatList;
 
 import com.blazeloader.api.client.render.SkinType;
-import com.blazeloader.event.listeners.PlayerListener.FallEventArgs;
+import com.blazeloader.event.listeners.args.FallEventArgs;
 import com.mumfrey.liteloader.transformers.event.ReturnEventInfo;
 import com.sollace.unicopia.network.RequestSpeciesPacket;
 import com.sollace.unicopia.server.PlayerSpeciesRegister;
@@ -73,10 +74,13 @@ public class EventHandler {
 	}
 	
 	public static void onVillagerInteract(ReturnEventInfo<EntityVillager, Boolean> event, EntityPlayer player) {
-		if (player.isSneaking()) {
-			event.setReturnValue(false);
-		}
+		if (player.isSneaking()) event.setReturnValue(false);
 	}
+	
+	public static void onIsWearing(ReturnEventInfo<EntityPlayer, Boolean> event, EnumPlayerModelParts part) {
+        Boolean result = PlayerExtension.get(event.getSource()).isWearing(part);
+        if (result != null) event.setReturnValue(result);
+    }
 	
 	public static void onGetSkinType(ReturnEventInfo<AbstractClientPlayer, String> event) {
 		SkinType result = PlayerExtension.get(event.getSource()).getSkinType();

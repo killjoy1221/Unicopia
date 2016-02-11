@@ -27,6 +27,7 @@ import net.minecraft.entity.SharedMonsterAttributes;
 import net.minecraft.entity.ai.attributes.AttributeModifier;
 import net.minecraft.entity.ai.attributes.IAttributeInstance;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EnumPlayerModelParts;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.potion.Potion;
 import net.minecraft.potion.PotionEffect;
@@ -272,7 +273,7 @@ public class PlayerExtension implements IEntityProperties {
 		if (!player.capabilities.isCreativeMode) {
 			if (species.canFly()) {
 				if (ticksSinceLanding < 2) ticksSinceLanding++;
-				if (!disguise.isActive()) {
+				if (disguise.canFly()) {
 					player.capabilities.allowFlying = true;
 					if (player.capabilities.isFlying) {
 						ticksSinceLanding = 0;
@@ -294,7 +295,7 @@ public class PlayerExtension implements IEntityProperties {
 	
 	public void updateIsFlying(Race species, boolean flying) {
 		if (!player.capabilities.isCreativeMode) {
-			player.capabilities.allowFlying = species.canFly() && !disguise.isActive();
+			player.capabilities.allowFlying = species.canFly() && disguise.canFly();
 			if (player.capabilities.allowFlying) {
 				player.capabilities.isFlying |= flying;
 				isFlying = player.capabilities.isFlying;
@@ -338,6 +339,11 @@ public class PlayerExtension implements IEntityProperties {
 	    		return skinType;
 	    	}
     	}
+    	return null;
+    }
+    
+    public Boolean isWearing(EnumPlayerModelParts part) {
+    	if (part == EnumPlayerModelParts.CAPE && disguise.isPlayer()) return disguise.getPlayer().hasCape();
     	return null;
     }
     

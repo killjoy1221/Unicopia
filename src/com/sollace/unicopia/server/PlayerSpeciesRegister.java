@@ -2,6 +2,7 @@ package com.sollace.unicopia.server;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.UUID;
 
 import com.sollace.unicopia.Race;
 
@@ -9,26 +10,27 @@ import net.minecraft.entity.player.EntityPlayer;
 
 public class PlayerSpeciesRegister {
 	private static ArrayList<Race> blackList;
-	private static final HashMap<String, Race> playerSpeciesMap = new HashMap<String, Race>();
+	private static final HashMap<UUID, Race> playerSpeciesMap = new HashMap<UUID, Race>();
 	
 	public static Race setPlayerSpecies(EntityPlayer p, Race s) {
 		if (s != null && p != null) {
 			if (!getSpeciesPermitted(s)) {
 				s = Race.getDefault();
 			}
-			playerSpeciesMap.put(p.getCommandSenderName(), s);
+			playerSpeciesMap.put(p.getUniqueID(), s);
 		}
 		return getPlayerSpecies(p);
 	}
 	
 	public static Race getPlayerSpecies(EntityPlayer p) {
-		if (p != null) {
-			String key = p.getCommandSenderName();
-			if (playerSpeciesMap.containsKey(key)) {
-				return playerSpeciesMap.get(key);
-			}
+		if (p != null) return getPlayerSpecies(p.getUniqueID());
+		return Race.getDefault();
+	}
+	
+	public static Race getPlayerSpecies(UUID key) {
+		if (key != null && playerSpeciesMap.containsKey(key)) {
+			return playerSpeciesMap.get(key);
 		}
-		
 		return Race.getDefault();
 	}
 	

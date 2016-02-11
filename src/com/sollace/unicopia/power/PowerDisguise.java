@@ -52,7 +52,7 @@ public class PowerDisguise extends Power<Power.EmptyData> {
 	}
 	
 	public void apply(EntityPlayer player, EmptyData data) {
-//		PlayerExtension.get(player).getDisguise().setPlayer(new PlayerIdent("Notch"));
+		//PlayerExtension.get(player).getDisguise().setPlayer(PlayerIdent.create("Notch"));
 		Entity looked = getLookedAtEntity(player, 10);
 		if (!(looked instanceof EntityLivingBase)) {
 			looked = null;
