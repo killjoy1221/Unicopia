@@ -93,7 +93,7 @@ public class PlayerExtension implements IEntityProperties {
 	}
 	
 	public boolean hasPageUnlock(int pageIndex) {
-		return pageIndex == 0 || unlockedPages.contains(Integer.valueOf(pageIndex));
+		return pageIndex == 0 || pageIndex == 7 || unlockedPages.contains(Integer.valueOf(pageIndex));
 	}
 	
 	public int getMaxUnlocked() {

@@ -6,6 +6,7 @@ import com.sollace.unicopia.PlayerExtension;
 import com.sollace.unicopia.Race;
 import com.sollace.unicopia.disguise.Disguise;
 import com.sollace.unicopia.server.PlayerSpeciesRegister;
+import com.sollace.util.Util;
 
 import io.netty.buffer.ByteBuf;
 import net.minecraft.entity.Entity;
@@ -38,11 +39,10 @@ public class PowerDisguise extends Power<Power.EmptyData> {
 
 	public EmptyData tryActivate(EntityPlayer player, World w) {
 		Entity looked = getLookedAtEntity(player, 10);
-		if (!(looked instanceof EntityLivingBase)) {
-			looked = null;
-		}
-		if (!PlayerExtension.get(player).getDisguise().match(looked)) {
-			return new EmptyData();
+		if (Util.DISGUISABLE.apply(looked)) {
+			if (!PlayerExtension.get(player).getDisguise().match(looked)) {
+				return new EmptyData();
+			}
 		}
 		return null;
 	}
@@ -54,23 +54,22 @@ public class PowerDisguise extends Power<Power.EmptyData> {
 	public void apply(EntityPlayer player, EmptyData data) {
 		//PlayerExtension.get(player).getDisguise().setPlayer(PlayerIdent.create("Notch"));
 		Entity looked = getLookedAtEntity(player, 10);
-		if (!(looked instanceof EntityLivingBase)) {
-			looked = null;
-		}
-		if (looked instanceof EntityPlayer) {
-			if (PlayerSpeciesRegister.getPlayerSpecies((EntityPlayer)looked) == Race.CHANGELING) {
-				Disguise disguise = PlayerExtension.get((EntityPlayer)looked).getDisguise();
-				if (disguise.isActive()) {
-					if (!disguise.isPlayer()) {
-						looked = disguise.getEntity();
-					} else {
-						PlayerExtension.get(player).getDisguise().setPlayer(disguise.getPlayer());
+		if (Util.DISGUISABLE.apply(looked)) {
+			if (looked instanceof EntityPlayer) {
+				if (PlayerSpeciesRegister.getPlayerSpecies((EntityPlayer)looked) == Race.CHANGELING) {
+					Disguise disguise = PlayerExtension.get((EntityPlayer)looked).getDisguise();
+					if (disguise.isActive()) {
+						if (!disguise.isPlayer()) {
+							looked = disguise.getEntity();
+						} else {
+							PlayerExtension.get(player).getDisguise().setPlayer(disguise.getPlayer());
+						}
 					}
 				}
 			}
+			PlayerExtension.get(player).setDisguise((EntityLivingBase)looked);
+			player.worldObj.playSoundEffect(player.posX, player.posY, player.posZ, "mob.zombie.remedy", 0.5f, 0.5f);
 		}
-		PlayerExtension.get(player).setDisguise((EntityLivingBase)looked);
-		player.worldObj.playSoundEffect(player.posX, player.posY, player.posZ, "mob.zombie.remedy", 0.5f, 0.5f);
 	}
 
 	public void preApply(EntityPlayer player) {}

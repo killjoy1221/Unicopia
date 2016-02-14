@@ -14,7 +14,7 @@ public class PagesList {
 	
 	private static final List<PageEvent> pageEvents = new ArrayList<PageEvent>();
 	
-	private static int totalPages = 2;
+	private static int totalPages = 0;
 	
 	/**
 	 * Sets the maximum number of pages displayed in the spellbook.

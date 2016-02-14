@@ -4,10 +4,15 @@ import java.io.IOException;
 
 import org.lwjgl.opengl.GL11;
 
+import com.blazeloader.bl.obf.BLOBF;
+import com.blazeloader.bl.obf.OBFLevel;
+import com.blazeloader.util.reflect.Reflect;
+import com.blazeloader.util.reflect.Var;
 import com.sollace.unicopia.PlayerExtension;
 import com.sollace.unicopia.container.ContainerBook;
 import com.sollace.unicopia.enchanting.IPageUnlockListener;
 import com.sollace.unicopia.enchanting.PagesList;
+import com.sollace.unicopia.enchanting.slot.SlotEnchanting;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiButton;
@@ -15,6 +20,7 @@ import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.texture.TextureUtil;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.inventory.Slot;
 import net.minecraft.util.BlockPos;
 import net.minecraft.util.ResourceLocation;
 
@@ -27,6 +33,8 @@ public class GuiScreenSpellBook extends GuiContainer implements IPageUnlockListe
 	
 	private PageButton nextPage;
 	private PageButton prevPage;
+	
+	private static final Var<GuiContainer, Slot> theSlot = Reflect.lookupField(BLOBF.getField("net.minecraft.client.gui.inventory.GuiContainer.theSlot", OBFLevel.MCP));
 	
 	public GuiScreenSpellBook(EntityPlayer player) {
 		super(new ContainerBook(player.inventory, player.worldObj, new BlockPos(player)));
@@ -92,6 +100,26 @@ public class GuiScreenSpellBook extends GuiContainer implements IPageUnlockListe
 			PagesList.readPage(currentPage);
 		}
 	}
+
+	protected void drawGradientRect(int left, int top, int width, int height, int startColor, int endColor) {
+		Slot slot = theSlot.get(this, null);
+		if (slot == null || left != slot.xDisplayPosition || top != slot.yDisplayPosition || !drawSlotOverlay(slot)) {
+			super.drawGradientRect(left, top, width, height, startColor, endColor);
+		}
+	}
+	
+	protected boolean drawSlotOverlay(Slot slot) {
+		if (slot instanceof SlotEnchanting) {
+			GlStateManager.enableBlend();
+	        GL11.glDisable(GL11.GL_ALPHA_TEST);
+			mc.getTextureManager().bindTexture(spellBookGuiTextures);
+	        drawModalRectWithCustomSizedTexture(slot.xDisplayPosition - 1, slot.yDisplayPosition - 1, 51, 223, 18, 18, 512, 256);
+	        GL11.glEnable(GL11.GL_ALPHA_TEST);
+	        GlStateManager.disableBlend();
+			return true;
+		}
+		return false;
+	}
 	
 	protected void drawGuiContainerForegroundLayer(int mouseX, int mouseY) {
 		super.drawGuiContainerForegroundLayer(mouseX, mouseY);
@@ -107,21 +135,23 @@ public class GuiScreenSpellBook extends GuiContainer implements IPageUnlockListe
         int top = (height - ySize) / 2;
         drawModalRectWithCustomSizedTexture(left, top, 0, 0, xSize, ySize, 512, 256);
         
+        
+        GlStateManager.enableBlend();
+        GL11.glDisable(GL11.GL_ALPHA_TEST);
         if (playerExtension.hasPageUnlock(currentPage)) {
         	if (mc.getTextureManager().getTexture(spellBookPageTextures) != TextureUtil.missingTexture) {
-		        GlStateManager.enableBlend();
 		        GlStateManager.blendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
 		        mc.getTextureManager().bindTexture(spellBookPageTextures);
-		        
 		        drawModalRectWithCustomSizedTexture(left, top, 0, 0, xSize, ySize, 512, 256);
-		        GlStateManager.disableBlend();
         	}
         }
         
         if (playerExtension.getTotalPagesUnlocked() > 0) {
         	mc.getTextureManager().bindTexture(spellBookGuiTextures);
-	        drawModalRectWithCustomSizedTexture(left + 170, top + 50, 407, 5, 68, 100, 512, 256);
+	        drawModalRectWithCustomSizedTexture(left + 152, top + 49, 407, 2, 100, 101, 512, 256);
         }
+        GL11.glEnable(GL11.GL_ALPHA_TEST);
+        GlStateManager.disableBlend();
 	}
 	
 	static class PageButton extends GuiButton {

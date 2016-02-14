@@ -3,21 +3,25 @@ package com.sollace.unicopia.entity;
 import com.sollace.unicopia.effect.SpellList;
 import com.sollace.unicopia.item.ItemSpell;
 import com.sollace.unicopia.server.PlayerSpeciesRegister;
+import com.sollace.util.entity.ITameable;
 import com.blazeloader.api.entity.IMousePickHandler;
 import com.sollace.unicopia.Unicopia.UItems;
 import com.sollace.unicopia.effect.IMagicEffect;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.Block.SoundType;
+import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.util.BlockPos;
 import net.minecraft.util.DamageSource;
+import net.minecraft.util.MathHelper;
 import net.minecraft.util.Vec3;
 import net.minecraft.world.World;
 
-public class EntitySpell extends EntityLivingBase implements IMagicals, IMousePickHandler {
+public class EntitySpell extends EntityLiving implements IMagicals, IMousePickHandler, ITameable {
 	
 	private IMagicEffect effect;
 	
@@ -27,10 +31,11 @@ public class EntitySpell extends EntityLivingBase implements IMagicals, IMousePi
 	
 	public EntitySpell(World w) {
 		super(w);
-		setSize(0.25F, 0.25F);
+		setSize(0.6f, 0.25f);
 		hoverStart = (float)(Math.random() * Math.PI * 2.0D);
 		renderDistanceWeight += 1;
 		preventEntitySpawning = false;
+		enablePersistence();
 	}
 	
 	public boolean isInRangeToRenderDist(double distance) {
@@ -66,10 +71,6 @@ public class EntitySpell extends EntityLivingBase implements IMagicals, IMousePi
     public boolean isPushedByWater() {return false;}
     
     public boolean canRenderOnFire() {return false;}
-    
-    public boolean isInvisibleToPlayer(EntityPlayer player) {
-        return super.isInvisibleToPlayer(player);
-    }
     
 	public void setOwner(EntityLivingBase owner) {
 		this.owner = owner;
@@ -123,9 +124,104 @@ public class EntitySpell extends EntityLivingBase implements IMagicals, IMousePi
 			} else {
 				effect.updateAt(this, worldObj, posX, posY, posZ, getLevel());
 			}
+			
+			if (effect.allowAI()) {
+				super.onUpdate();
+			}
 		}
 	}
 	
+	
+	public void fall(float distance, float damageMultiplier) {
+		
+	}
+
+    protected void updateFallState(double y, boolean onGroundIn, Block blockIn, BlockPos pos) {
+    	//super.updateFallState(y, onGroundIn = this.onGround = true, blockIn, pos);
+    	this.onGround = true;
+    }
+    
+    public void moveEntityWithHeading(float strafe, float forward) {
+        double var8;
+        float var10;
+        if (this.isServerWorld()) {
+            float var5;
+            float var6;
+
+            if (this.isInWater() || this.isInLava()) {
+            	float var3 = 0.91F;
+            	float var4 = 0.16277136F / (var3 * var3 * var3);
+            	
+                var8 = this.posY;
+                
+                
+                var5 = this.getAIMoveSpeed() * var4;
+
+                this.moveFlying(strafe, forward, var5);
+                var3 = 0.91F;
+                
+                this.moveEntity(this.motionX, this.motionY, this.motionZ);
+                this.motionX *= (double)var3;
+                this.motionY *= 0.800000011920929D;
+                this.motionZ *= (double)var3;
+                this.motionY -= 0.02D;
+
+                if (this.isCollidedHorizontally && this.isOffsetPositionInLiquid(this.motionX, this.motionY + 0.6000000238418579D - this.posY + var8, this.motionZ)) {
+                    this.motionY = 0.30000001192092896D;
+                }
+            } else {
+                float var3 = 0.91F;
+
+                if (onGround) {
+                    var3 = this.worldObj.getBlockState(new BlockPos(MathHelper.floor_double(this.posX), MathHelper.floor_double(this.getEntityBoundingBox().minY) - 1, MathHelper.floor_double(this.posZ))).getBlock().slipperiness * 0.91F;
+                }
+
+                float var4 = 0.16277136F / (var3 * var3 * var3);
+
+                if (onGround) {
+                    var5 = this.getAIMoveSpeed() * var4;
+                } else {
+                    var5 = this.jumpMovementFactor;
+                }
+
+                this.moveFlying(strafe, forward, var5);
+                var3 = 0.91F;
+
+                if (this.onGround) {
+                    var3 = this.worldObj.getBlockState(new BlockPos(MathHelper.floor_double(this.posX), MathHelper.floor_double(this.getEntityBoundingBox().minY) - 1, MathHelper.floor_double(this.posZ))).getBlock().slipperiness * 0.91F;
+                }
+
+                this.moveEntity(this.motionX, this.motionY, this.motionZ);
+
+                if (this.isCollidedHorizontally && this.isOnLadder()) this.motionY = 0.2D;
+
+                if (this.worldObj.isRemote && (!this.worldObj.isBlockLoaded(new BlockPos((int)this.posX, 0, (int)this.posZ)) || !this.worldObj.getChunkFromBlockCoords(new BlockPos((int)this.posX, 0, (int)this.posZ)).isLoaded())) {
+                    if (this.posY > 0.0D) {
+                        this.motionY = -0.1D;
+                    } else {
+                        this.motionY = 0.0D;
+                    }
+                } else {
+                    this.motionY -= 0.08D;
+                }
+
+                this.motionY *= (double)var3;//0.9800000190734863D;
+                this.motionX *= (double)var3;
+                this.motionZ *= (double)var3;
+            }
+        }
+
+        this.prevLimbSwingAmount = this.limbSwingAmount;
+        var8 = this.posX - this.prevPosX;
+        double var9 = this.posZ - this.prevPosZ;
+        var10 = MathHelper.sqrt_double(var8 * var8 + var9 * var9) * 4.0F;
+
+        if (var10 > 1.0F) var10 = 1.0F;
+
+        this.limbSwingAmount += (var10 - this.limbSwingAmount) * 0.4F;
+        this.limbSwing += this.limbSwingAmount;
+    }
+    
 	public boolean attackEntityFrom(DamageSource source, float amount) {
 		if (!worldObj.isRemote) {
 			setDead();
@@ -274,4 +370,8 @@ public class EntitySpell extends EntityLivingBase implements IMagicals, IMousePi
 	public void setCurrentItemOrArmor(int slotIn, ItemStack stack) { }
 	
 	public ItemStack[] getInventory() {return new ItemStack[0];}
+	
+	public boolean isSitting() {
+		return false;
+	}
 }

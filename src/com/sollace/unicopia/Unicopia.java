@@ -39,6 +39,7 @@ import com.sollace.unicopia.effect.SpellFire;
 import com.sollace.unicopia.effect.SpellIce;
 import com.sollace.unicopia.effect.SpellInferno;
 import com.sollace.unicopia.effect.SpellList;
+import com.sollace.unicopia.effect.SpellMinion;
 import com.sollace.unicopia.effect.SpellPortal;
 import com.sollace.unicopia.effect.SpellShield;
 import com.sollace.unicopia.enchanting.BasicCraftingEvent;
@@ -279,6 +280,7 @@ public class Unicopia {
 		craftingManager.addRecipe(new SpellRecipe("inferno", Items.lava_bucket, new ItemStack(UItems.spell, 1, SpellList.getId("fire")), Items.blaze_rod));
 		craftingManager.addRecipe(new SpellRecipe("portal", Items.ender_pearl, Items.ghast_tear, Items.redstone));
 		craftingManager.addRecipe(new SpellRecipe("attract", new ItemStack(UItems.spell, 1, SpellList.getId("shield")), Items.rabbit_foot, Blocks.sponge));
+		craftingManager.addRecipe(new SpellRecipe("minion", new ItemStack(UItems.spell), Items.egg, Items.water_bucket, Items.bone, Items.redstone));
 	}
 	
 	private void registerPowers() {
@@ -303,6 +305,7 @@ public class Unicopia {
 		SpellList.registerSpell("inferno", SpellInferno.class, MCColor.BRUSHES_DARKORANGE.value()); //MCColor.colorInteger(1,0.9f,0.6f)
 		SpellList.registerSpell("portal", SpellPortal.class, MCColor.colorInteger(0.3f,0.6f,0.3f));
 		SpellList.registerSpell("attract", SpellAttractor.class, MCColor.BRUSHES_DARKGREEN.value());
+		SpellList.registerSpell("minion", SpellMinion.class, MCColor.BRUSHES_ANTIQUEWHITE.value());
 	}
 	
 	private void registerPages() {

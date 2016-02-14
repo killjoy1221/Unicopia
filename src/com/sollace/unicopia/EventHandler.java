@@ -65,7 +65,7 @@ public class EventHandler {
 	}
 	
 	public void onPlayerRightClick(EntityPlayer player, ItemStack item) {
-		if (ItemFood.class.isAssignableFrom(item.getItem().getClass())) {
+		if (item.getItem() instanceof ItemFood) {
 			if (PlayerSpeciesRegister.getPlayerSpecies(player) == Race.CHANGELING) {
 				player.addPotionEffect(new PotionEffect(Potion.weakness.id, 2000, 2));
 				player.addPotionEffect(new PotionEffect(Potion.confusion.id, 2000, 2));

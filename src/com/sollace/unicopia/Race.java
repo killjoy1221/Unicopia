@@ -1,6 +1,11 @@
 package com.sollace.unicopia;
 
-public enum Race {
+import com.google.common.base.Predicate;
+import com.sollace.unicopia.server.PlayerSpeciesRegister;
+
+import net.minecraft.entity.player.EntityPlayer;
+
+public enum Race implements Predicate {
 	EARTH("Earth Pony", false, false),
 	UNICORN("Unicorn", false, true),
 	PEGASUS("Pegasus", true, false),
@@ -11,10 +16,10 @@ public enum Race {
 	private final boolean fly;
 	private final boolean magic;
 	
-	Race(String name, boolean fly, boolean magic) {
+	Race(String name, boolean flying, boolean magical) {
 		displayName = name;
-		this.fly = fly;
-		this.magic = magic;
+		fly = flying;
+		magic = magical;
 	}
 	
 	public static Race getDefault() {
@@ -69,5 +74,9 @@ public enum Race {
 			}
 		} catch (NumberFormatException e) { }
 		return null;
+	}
+	
+	public boolean apply(Object o) {
+		return o instanceof EntityPlayer && PlayerSpeciesRegister.getPlayerSpecies((EntityPlayer)o) == this;
 	}
 }

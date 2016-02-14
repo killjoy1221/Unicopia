@@ -84,4 +84,9 @@ public interface IMagicEffect {
 	 * @param compound	Compound tag to read from.
 	 */
 	public void readFromNBT(NBTTagCompound compound);
+	
+	/**
+	 * Return true to allow the gem update and move.
+	 */
+	public boolean allowAI();
 }

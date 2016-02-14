@@ -72,7 +72,7 @@ public class BlockCloud extends Block {
         if (entityIn.isSneaking()) {
             super.onFallenUpon(worldIn, pos, entityIn, fallDistance);
         } else {
-            entityIn.fall(fallDistance, 0.0F);
+            entityIn.fall(fallDistance, 0);
         }
     }
     

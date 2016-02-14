@@ -130,7 +130,7 @@ public final class SpellList {
 	public static int getId(IMagicEffect obj) {
 		if (obj == null) return 0;
 		Class clazz = obj.getClass();
-		return !classLookup.containsKey(clazz) ? 0 : classLookup.get(clazz).id;
+		return classLookup.containsKey(clazz) ? classLookup.get(clazz).id : 0;
 	}
 	
 	/**

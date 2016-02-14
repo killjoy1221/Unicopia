@@ -1,17 +1,21 @@
-package com.sollace.unicopia.enchanting;
+package com.sollace.unicopia.enchanting.slot;
 
 import com.sollace.unicopia.Unicopia;
 import com.sollace.unicopia.Unicopia.UItems;
+import com.sollace.unicopia.enchanting.IPageUnlockListener;
+import com.sollace.unicopia.enchanting.InventoryEnchanting;
+import com.sollace.unicopia.enchanting.PagesList;
 
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.IInventory;
-import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 
-public class SlotEnchantingResult extends Slot {
+public class SlotEnchantingResult extends SlotEnchanting {
 	
 	private final EntityPlayer thePlayer;
 	private final InventoryEnchanting craftMatrix;
+	
+	private int amountCrafted;
 	
 	private IPageUnlockListener listener;
 	
@@ -25,6 +29,14 @@ public class SlotEnchantingResult extends Slot {
 	public void setListener(IPageUnlockListener listener) {
 		this.listener = listener;
 	}
+	
+	public ItemStack decrStackSize(int amount) {
+        if (getHasStack()) {
+            amountCrafted += Math.min(amount, getStack().stackSize);
+        }
+
+        return super.decrStackSize(amount);
+    }
 	
 	public void onPickupFromSlot(EntityPlayer player, ItemStack stack) {
         this.onCrafting(stack);
@@ -46,12 +58,26 @@ public class SlotEnchantingResult extends Slot {
                 if (craftMatrix.getStackInSlot(i) == null) {
                     craftMatrix.setInventorySlotContents(i, remainder);
                 }
+            } else {
+            	ItemStack inSlot = craftMatrix.getStackInSlot(i);
+            	if (inSlot != null) {
+            		if (inSlot.stackSize <= amountCrafted) {
+            			craftMatrix.setInventorySlotContents(i, null);
+            		}
+            	} else {
+            		craftMatrix.decrStackSize(i, amountCrafted);
+            	}
             }
         }
-        super.onPickupFromSlot(player, stack);
     }
 	
+	protected void onCrafting(ItemStack stack, int amount) {
+		amountCrafted += amount;
+		onCrafting(stack);
+	}
+	
 	protected void onCrafting(ItemStack stack) {
+		amountCrafted = 0;
 		if (PagesList.unlockPage(thePlayer, stack) && listener != null) {
 			listener.onPageUnlocked();
 		}

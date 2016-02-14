@@ -20,6 +20,7 @@ item.spell.inferno.name=Gem of Inferno
 item.spell.ice.name=Gem of Freezing
 item.spell.portal.name=Gem of Teleportation
 item.spell.attract.name=Gem of Retention
+item.spell.minion.name=Gem of Obedience
 item.spellbook.name=Spellbook
 
 item.apple.green.name=Granny Smith Apple
@@ -61,6 +62,7 @@ unicopia.power.rain=Pegasus (Primary)
 unicopia.power.thunder=Pegasus (Secondary)
 
 unicopia.power.feed=Changeling (Primary)
+unicopia.power.disguise=Changeling (Secondary)
 
 death.attack.feed=%1$s was drained of all life
 death.attack.feed.player=%1$s died to feed %2$s

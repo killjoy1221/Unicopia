@@ -57,6 +57,10 @@ public class SpellPortal implements IMagicEffect, IUseAction {
 		return isDead;
 	}
 	
+	public boolean allowAI() {
+		return false;
+	}
+	
 	public ActionResult onUse(ItemStack stack, EntityPlayer player, World world, BlockPos pos, EnumFacing side, float hitX, float hitY, float hitZ) {
 		if (!world.isRemote) {
 			position = pos.offset(side);

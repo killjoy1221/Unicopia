@@ -8,9 +8,9 @@ import com.blazeloader.util.version.Versions;
 import com.sollace.unicopia.Race;
 import com.sollace.unicopia.Unicopia.Particles;
 import com.sollace.unicopia.entity.EntitySpell;
-import com.sollace.unicopia.entity.IMagicals;
 import com.sollace.unicopia.power.Power;
 import com.sollace.unicopia.server.PlayerSpeciesRegister;
+import com.sollace.util.Util;
 
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
@@ -75,9 +75,9 @@ public class SpellShield extends Spell {
 	public boolean applyEntities(EntitySpell source, Entity owner, World w, double x, double y, double z, int level) {
 		double radius = 4 + (level * 2);
 		AxisAlignedBB bb = new AxisAlignedBB(x - radius, y - radius, z - radius, x + radius, y + radius, z + radius);
-		List<Entity> entities = (List<Entity>)w.getEntitiesWithinAABB(Entity.class, bb);
+		List<Entity> entities = (List<Entity>)w.getEntitiesInAABBexcluding(source, bb, Util.NONMAGICALS);
 		for (Entity i : entities) {
-			if ((!i.equals(owner) || (owner instanceof EntityPlayer && !PlayerSpeciesRegister.getPlayerSpecies((EntityPlayer)owner).canCast())) && !(i instanceof IMagicals)) {
+			if ((!i.equals(owner) || (owner instanceof EntityPlayer && !PlayerSpeciesRegister.getPlayerSpecies((EntityPlayer)owner).canCast()))) {
 				double dist = i.getDistance(x, y, z);
 				double dist2 = i.getDistance(x, y - i.getEyeHeight(), z);
 				boolean projectile = ApiProjectile.isProjectile(i);

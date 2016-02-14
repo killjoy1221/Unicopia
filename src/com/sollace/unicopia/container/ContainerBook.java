@@ -5,7 +5,8 @@ import com.sollace.unicopia.Unicopia;
 import com.sollace.unicopia.Unicopia.UItems;
 import com.sollace.unicopia.enchanting.IPageUnlockListener;
 import com.sollace.unicopia.enchanting.InventoryEnchanting;
-import com.sollace.unicopia.enchanting.SlotEnchantingResult;
+import com.sollace.unicopia.enchanting.slot.SlotEnchanting;
+import com.sollace.unicopia.enchanting.slot.SlotEnchantingResult;
 import com.sollace.unicopia.server.PlayerSpeciesRegister;
 
 import net.minecraft.entity.player.EntityPlayer;
@@ -24,7 +25,7 @@ public class ContainerBook extends Container {
 	
 	private IInventory craftResult = new InventoryBasic("Spell Result", false, 1);
 	
-	private InventoryEnchanting craftMatrix = new InventoryEnchanting(craftResult, this, 2, 2);
+	private InventoryEnchanting craftMatrix = new InventoryEnchanting(craftResult, this, 5, 1);
 	
 	private boolean hasInit = false;
 	
@@ -54,10 +55,11 @@ public class ContainerBook extends Container {
 	public void initCraftingSlots(EntityPlayer player) {
 		if (!hasInit) {
 			hasInit = true;
-			addSlotToContainer(new Slot(craftMatrix, 0, 171, 51));
-			addSlotToContainer(new Slot(craftMatrix, 1, 171, 133));
-			addSlotToContainer(new Slot(craftMatrix, 2, 221, 133));
-			addSlotToContainer(new Slot(craftMatrix, 3, 221, 51));
+			addSlotToContainer(new SlotEnchanting(craftMatrix, 0, 180, 50));
+			addSlotToContainer(new SlotEnchanting(craftMatrix, 1, 154, 94));
+			addSlotToContainer(new SlotEnchanting(craftMatrix, 2, 180, 134));
+			addSlotToContainer(new SlotEnchanting(craftMatrix, 3, 231, 120));
+			addSlotToContainer(new SlotEnchanting(craftMatrix, 4, 232, 65));
 			addSlotToContainer(resultSlot = new SlotEnchantingResult(listener, player, craftMatrix, craftResult, 0, 196, 92));
 		}
 	}
@@ -81,9 +83,15 @@ public class ContainerBook extends Container {
         if (slot != null && slot.getHasStack()) {
             ItemStack slotStack = slot.getStack();
             stack = slotStack.copy();
-
-            if (index < 9) {
-                if (!mergeItemStack(slotStack, 9, 13, true)) {
+            
+            if (index == 14) {
+            	if (!mergeItemStack(slotStack, 0, 9, true)) {
+                    return null;
+                }
+            	slot.onPickupFromSlot(playerIn, stack);
+                slot.onSlotChange(slotStack, stack);
+            } else if (index < 9) {
+                if (!mergeItemStack(slotStack, 9, 14, true)) {
                     return null;
                 }
             } else if (!mergeItemStack(slotStack, 0, 9, false)) {
@@ -91,10 +99,16 @@ public class ContainerBook extends Container {
             }
 
             if (slotStack.stackSize == 0) {
-                slot.putStack((ItemStack)null);
+                slot.putStack(null);
             } else {
                 slot.onSlotChanged();
             }
+            
+            if (slotStack.stackSize == stack.stackSize) {
+                return null;
+            }
+            
+            slot.onPickupFromSlot(playerIn, slotStack);
         }
 
         return stack;
@@ -112,7 +126,7 @@ public class ContainerBook extends Container {
         ItemStack inSlot;
         
         if (stack.getItem() == UItems.spell && startIndex >= 9) {
-        	slot = (Slot)inventorySlots.get(13);
+        	slot = (Slot)inventorySlots.get(14);
         	inSlot = slot.getStack();
         	if (inSlot == null) {
         		slot.putStack(stack.copy());

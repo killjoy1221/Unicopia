@@ -22,6 +22,10 @@ public abstract class Spell implements IMagicEffect {
 		return isDead;
 	}
 	
+	public boolean allowAI() {
+		return false;
+	}
+	
 	public boolean update(Entity source) {
 		return false;
 	}
