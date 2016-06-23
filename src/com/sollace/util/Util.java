@@ -17,7 +17,7 @@ public class Util {
 	};
 	public static Predicate DISGUISABLE = new Predicate() {
 		public boolean apply(Object o) {
-			return o instanceof EntityLivingBase && NOT_CLOUDS.apply(o);
+			return o == null || o instanceof EntityLivingBase && NOT_CLOUDS.apply(o);
 		}
 	};
 	public static Predicate FLYABLE = new Predicate() {

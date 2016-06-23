@@ -7,13 +7,10 @@ import org.lwjgl.input.Keyboard;
 
 import com.blazeloader.api.achievement.ApiAchievement;
 import com.blazeloader.api.block.ApiBlock;
-import com.blazeloader.api.client.ApiClient;
 import com.blazeloader.api.client.MCColor;
 import com.blazeloader.api.client.ModStateMap;
-import com.blazeloader.api.client.particles.ApiParticlesClient;
 import com.blazeloader.api.client.render.ApiRenderBlock;
 import com.blazeloader.api.client.render.ApiRenderItem;
-import com.blazeloader.api.client.render.ApiRenderPlayer;
 import com.blazeloader.api.entity.ApiEntity;
 import com.blazeloader.api.item.ApiItem;
 import com.blazeloader.api.particles.ApiParticles;
@@ -28,9 +25,6 @@ import com.sollace.unicopia.block.BlockCloud;
 import com.sollace.unicopia.block.BlockCloudSlab;
 import com.sollace.unicopia.block.BlockCloudStairs;
 import com.sollace.unicopia.client.ClientSide;
-import com.sollace.unicopia.client.particle.EntityMagicFX;
-import com.sollace.unicopia.client.particle.EntityRaindropFX;
-import com.sollace.unicopia.client.render.RenderChangeling;
 import com.sollace.unicopia.command.CommandDecloud;
 import com.sollace.unicopia.command.CommandOverrideGameMode;
 import com.sollace.unicopia.command.CommandSpecies;
@@ -134,10 +128,7 @@ public class Unicopia {
 		Particles.rain = ApiParticles.registerParticle("rain", false, 0);
 		
 		if (isClient()) {
-			ApiParticlesClient.registerParticleFactory(Particles.unicorn, new EntityMagicFX.Factory());
-			ApiParticlesClient.registerParticleFactory(Particles.rain, new EntityRaindropFX.Factory());
-			
-			PlayerExtension.skinType = ApiRenderPlayer.setPlayerRenderer("disguised", new RenderChangeling(ApiClient.getRenderManager()));
+			ClientSide.registerRenderers();
 		}
 		
 		if (!Settings.getLegacyMode()) {
@@ -154,7 +145,7 @@ public class Unicopia {
 			registerEnchantments();
 			
 			if (isClient()) {
-				ClientSide.RegisterRenderers();
+				ClientSide.RegisterEntityRenderers();
 			}
 		}
 	}
@@ -195,7 +186,7 @@ public class Unicopia {
 			ApiRenderItem.registerItem(UItems.cloud, ItemCloud.CloudSize.MEDIUM.getMetadata(), MODID + ":cloud_med");
 			ApiRenderItem.registerItem(UItems.cloud, ItemCloud.CloudSize.LARGE.getMetadata(), MODID + ":cloud_large");
 			
-			String[] appleVariants = ((ItemApple)Items.apple).getVariants();
+			String[] appleVariants = UItems.apple.getVariants();
 			for (int i = 1; i < appleVariants.length; i++) {
 				ApiRenderItem.registerItem(Items.apple, i, appleVariants[i]);
 			}

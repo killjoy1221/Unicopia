@@ -12,6 +12,7 @@ import com.blazeloader.util.shape.Sphere;
 import com.google.common.collect.ImmutableSet;
 import com.sollace.unicopia.PlayerExtension;
 import com.sollace.unicopia.Race;
+import com.sollace.unicopia.Settings;
 import com.sollace.unicopia.Unicopia.UItems;
 import com.sollace.unicopia.server.PlayerSpeciesRegister;
 import com.sollace.util.MagicalDamageSource;
@@ -28,6 +29,7 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
+import net.minecraft.init.Items;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.AxisAlignedBB;
 import net.minecraft.util.BlockPos;
@@ -160,7 +162,7 @@ public class PowerStomp extends Power<PowerStomp.Data> {
 					w.playAuxSFX(2001, pos, Block.getStateId(state));
 					EntityItem item = new EntityItem(w);
 					item.setPosition(pos.getX() + 0.5, pos.getY() - 0.5, pos.getZ() + 0.5);
-					item.setEntityItemStack(new ItemStack(UItems.apple, 1, UItems.apple.getRandomAppleMetadata(w.rand, getVariant(log))));
+					item.setEntityItemStack(new ItemStack(Items.apple, 1, getAppleMeta(w, log)));
 					w.spawnEntityInWorld(item);
 				}
 				dropApplesPart(done, w, log, pos.up(), level + 1);
@@ -170,6 +172,13 @@ public class PowerStomp extends Power<PowerStomp.Data> {
 				dropApplesPart(done, w, log, pos.west(), level + 1);
 			}
 		}
+	}
+	
+	private int getAppleMeta(World w, IBlockState log) {
+		if (Settings.getLegacyMode()) {
+			return 0;
+		}
+		return UItems.apple.getRandomAppleMetadata(w.rand, getVariant(log));
 	}
 	
 	private int measureTree(World w, IBlockState log, BlockPos pos) {

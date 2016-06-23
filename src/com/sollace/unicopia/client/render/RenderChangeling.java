@@ -13,6 +13,7 @@ import net.minecraft.client.renderer.entity.RenderManager;
 import net.minecraft.client.renderer.entity.RenderPlayer;
 import net.minecraft.client.renderer.entity.RendererLivingEntity;
 import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.entity.monster.EntitySkeleton;
 import net.minecraft.entity.monster.EntityZombie;
 
 public class RenderChangeling extends RenderPlayer {
@@ -47,7 +48,7 @@ public class RenderChangeling extends RenderPlayer {
 				renderArm((ModelBiped)m, getPlayerModel().bipedRightArm, ((ModelBiped) m).bipedRightArm);
 			}
 		}
-		if (renderedEntity instanceof EntityZombie) {
+		if (renderedEntity instanceof EntityZombie || renderedEntity instanceof EntitySkeleton) {
 			itemRenderer.renderLeftArm(clientPlayer);
 		}
     }

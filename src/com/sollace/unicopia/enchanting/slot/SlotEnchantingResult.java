@@ -89,4 +89,8 @@ public class SlotEnchantingResult extends SlotEnchanting {
 	public boolean isItemValid(ItemStack stack) {
         return stack.getItem() == UItems.spell;
     }
+	
+	public String getSlotTexture() {
+        return "minecraft:items/empty_slot_gem";
+    }
 }

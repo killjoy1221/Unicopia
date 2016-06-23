@@ -13,6 +13,7 @@ import net.minecraft.world.World;
 
 import com.sollace.unicopia.PlayerExtension;
 import com.sollace.unicopia.Race;
+import com.sollace.unicopia.Unicopia;
 import com.sollace.unicopia.client.ClientSide;
 
 public class PowerGrow extends Power<Power.LocationData> {
@@ -83,7 +84,7 @@ public class PowerGrow extends Power<Power.LocationData> {
 	}
 	
 	public void preApply(EntityPlayer player) {
-		spawnParticles("unicorn", player, 1);
+		spawnParticles(Unicopia.Particles.unicorn.getData(), player, 1);
 	}
 	
 	public void postApply(EntityPlayer player) {

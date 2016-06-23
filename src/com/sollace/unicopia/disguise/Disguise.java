@@ -1,9 +1,12 @@
 package com.sollace.unicopia.disguise;
 
+import com.blazeloader.api.block.ApiBlock;
 import com.blazeloader.util.data.INBTWritable;
 import com.blazeloader.util.playerinfo.PlayerIdent;
 import com.sollace.unicopia.server.PlayerSpeciesRegister;
 
+import net.minecraft.block.Block;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityFlying;
 import net.minecraft.entity.EntityList;
@@ -15,11 +18,19 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.util.AxisAlignedBB;
+import net.minecraft.world.World;
 
 public class Disguise implements INBTWritable {
 	
+	private World worldObj;
+	
 	private EntityLivingBase disguiseEntity;
 	private PlayerIdent disguisePlayer;
+	
+	public void setWorld(World w) {
+		worldObj = w;
+	}
 	
 	public void set(EntityPlayer player, EntityLivingBase entity) {
 		if (entity instanceof EntityPlayer) {
@@ -29,6 +40,7 @@ public class Disguise implements INBTWritable {
 			disguisePlayer = null;
 			if (entity == null) {
 				disguiseEntity = null;
+				setSize(player, 0.6F, 1.8F);
 				return;
 			}
 			NBTTagCompound copy = new NBTTagCompound();
@@ -38,11 +50,25 @@ public class Disguise implements INBTWritable {
 			disguiseEntity.copyDataFromOld(entity);
 			disguiseEntity.setCustomNameTag(player.getDisplayName().getFormattedText());
 			disguiseEntity.setAlwaysRenderNameTag(true);
+			disguiseEntity.setEntityId(entity.getEntityId());
 			if (disguiseEntity instanceof EntityEnderman) {
 				((EntityEnderman) disguiseEntity).setHeldBlockState(Blocks.air.getDefaultState());
 			}
 		}
 	}
+	
+	protected void setSize(EntityPlayer player, float width, float height) {
+        if (width != player.width || height != player.height) {
+            float oldWidth = player.width;
+            player.width = width;
+            player.height = height;
+            AxisAlignedBB bb = player.getEntityBoundingBox();
+            player.setEntityBoundingBox(new AxisAlignedBB(bb.minX, bb.minY, bb.minZ, bb.minX + player.width, bb.minY + player.height, bb.minZ + player.width));
+            if (player.width > oldWidth && !player.worldObj.isRemote) {
+                //player.moveEntity(oldWidth - player.width, 0, oldWidth - player.width);
+            }
+        }
+    }
 	
 	public void tick(EntityPlayer player) {
 		if (!isPlayer()) {
@@ -66,6 +92,12 @@ public class Disguise implements INBTWritable {
 		            disguise.livingSoundTime = -disguise.getTalkInterval();
 		            disguise.playLivingSound();
 		        }
+			}
+			if (disguiseEntity instanceof EntityEnderman) {
+				ItemStack stack = player.getHeldItem();
+				Block b = stack == null ? Blocks.air : ApiBlock.getBlockByItem(stack.getItem());
+				IBlockState state = stack == null || b == null ? Blocks.air.getDefaultState() : b.getStateFromMeta(stack.getMetadata());
+				((EntityEnderman) disguiseEntity).setHeldBlockState(state);
 			}
 			disguiseEntity.setPosition(player.posX, -30, player.posZ);
 			disguiseEntity.onUpdate();
@@ -106,9 +138,14 @@ public class Disguise implements INBTWritable {
 	}
 	
 	public boolean match(Entity looked) {
-		if (looked == null && isActive()) return false;
-		if (looked instanceof EntityPlayer && isPlayer()) {
-			return ((EntityPlayer) looked).getGameProfile().getId().equals(getPlayer().getUniqueID());
+		if (looked == null) {
+			if (!isActive()) return true;
+		} else if (isPlayer()) {
+			if (looked instanceof EntityPlayer) {
+				return ((EntityPlayer) looked).getGameProfile().getId().equals(getPlayer().getUniqueID());
+			}
+		} else if (isActive()) {
+			return looked.equals(disguiseEntity);
 		}
 		return false;
 	}
@@ -125,7 +162,7 @@ public class Disguise implements INBTWritable {
 	
 	public void readFromNBT(NBTTagCompound compound) {
 		if (compound.hasKey("Entity")) {
-			disguiseEntity = (EntityLivingBase)EntityList.createEntityFromNBT(compound.getCompoundTag("Entity"), null);
+			disguiseEntity = (EntityLivingBase)EntityList.createEntityFromNBT(compound.getCompoundTag("Entity"), worldObj);
 			disguisePlayer = null;
 		} else {
 			disguiseEntity = null;

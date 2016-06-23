@@ -91,6 +91,13 @@ public class EventHandler {
 		NetworkPlayerInfo info = PlayerExtension.get(event.getSource()).getPlayerInfo();
 		if (info != null) event.setReturnValue(info);
 	}
+	
+	public static void onGetEyeHeight(ReturnEventInfo<EntityPlayer, Float> event) {
+		PlayerExtension prop = PlayerExtension.get(event.getSource());
+		if (prop.getDisguise().isActive() && !prop.getDisguise().isPlayer()) { //Eye Height for disguises
+			event.setReturnValue(prop.getDisguise().getEntity().getEyeHeight());
+		}
+	}
 }
 
 

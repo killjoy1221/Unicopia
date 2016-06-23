@@ -15,6 +15,7 @@ import net.minecraft.world.World;
 
 import com.sollace.unicopia.PlayerExtension;
 import com.sollace.unicopia.Race;
+import com.sollace.unicopia.Unicopia;
 import com.sollace.util.Util;
 import com.sollace.util.VecHelper;
 
@@ -68,7 +69,7 @@ public class PowerTeleport extends Power<Power.LocationData> {
 	}
 	
 	public void postApply(EntityPlayer player) {
-		spawnParticles("unicorn", player, 5);
+		spawnParticles(Unicopia.Particles.unicorn.getData(), player, 1);
 	}
 	
 	private LocationData SelectCoordinates(EntityPlayer player, World w) {

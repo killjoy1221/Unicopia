@@ -148,6 +148,7 @@ public class PlayerExtension implements IEntityProperties {
 		}
 		
 		if (compound.hasKey("disguise")) {
+			this.disguise.setWorld(player.worldObj);
 			this.disguise.readFromNBT(compound.getCompoundTag("disguise"));
 		}
 		

@@ -39,10 +39,8 @@ public class PowerDisguise extends Power<Power.EmptyData> {
 
 	public EmptyData tryActivate(EntityPlayer player, World w) {
 		Entity looked = getLookedAtEntity(player, 10);
-		if (Util.DISGUISABLE.apply(looked)) {
-			if (!PlayerExtension.get(player).getDisguise().match(looked)) {
-				return new EmptyData();
-			}
+		if (Util.DISGUISABLE.apply(looked) && !PlayerExtension.get(player).getDisguise().match(looked)) {
+			return new EmptyData();
 		}
 		return null;
 	}
@@ -54,22 +52,31 @@ public class PowerDisguise extends Power<Power.EmptyData> {
 	public void apply(EntityPlayer player, EmptyData data) {
 		//PlayerExtension.get(player).getDisguise().setPlayer(PlayerIdent.create("Notch"));
 		Entity looked = getLookedAtEntity(player, 10);
-		if (Util.DISGUISABLE.apply(looked)) {
+		if (Util.DISGUISABLE.apply(looked) && !PlayerExtension.get(player).getDisguise().match(looked)) {
 			if (looked instanceof EntityPlayer) {
-				if (PlayerSpeciesRegister.getPlayerSpecies((EntityPlayer)looked) == Race.CHANGELING) {
-					Disguise disguise = PlayerExtension.get((EntityPlayer)looked).getDisguise();
-					if (disguise.isActive()) {
-						if (!disguise.isPlayer()) {
-							looked = disguise.getEntity();
-						} else {
-							PlayerExtension.get(player).getDisguise().setPlayer(disguise.getPlayer());
-						}
-					}
+				if ((looked = resolvePlayer(player, (EntityPlayer)looked)) == null) {
+					return;
 				}
 			}
 			PlayerExtension.get(player).setDisguise((EntityLivingBase)looked);
 			player.worldObj.playSoundEffect(player.posX, player.posY, player.posZ, "mob.zombie.remedy", 0.5f, 0.5f);
 		}
+	}
+	
+	private EntityLivingBase resolvePlayer(EntityPlayer player, EntityPlayer looked) {
+		if (PlayerSpeciesRegister.getPlayerSpecies(looked) == Race.CHANGELING) {
+			Disguise disguise = PlayerExtension.get(looked).getDisguise();
+			if (disguise.isActive()) {
+				if (!disguise.isPlayer()) {
+					return disguise.getEntity();
+				} else if (!disguise.getPlayer().getGameProfile().getName().equalsIgnoreCase(player.getCommandSenderName())) {
+					PlayerExtension.get(player).getDisguise().setPlayer(disguise.getPlayer());
+					player.worldObj.playSoundEffect(player.posX, player.posY, player.posZ, "mob.zombie.remedy", 0.5f, 0.5f);
+					return null;
+				}
+			}
+		}
+		return looked;
 	}
 
 	public void preApply(EntityPlayer player) {}

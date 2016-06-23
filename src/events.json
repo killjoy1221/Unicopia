@@ -5,14 +5,15 @@
             { "id":  "EntityPlayer", "mcp": "net.minecraft.entity.player.EntityPlayer", "obf": "ahd"},
             { "id":  "AbstractClientPlayer", "mcp": "net.minecraft.client.entity.AbstractClientPlayer", "obf": "cil"},
             { "id":  "NetworkPlayerInfo", "mcp": "net.minecraft.client.network.NetworkPlayerInfo", "obf": "ces"},
-            { "id":  "EnumPlayerModelParts", "mcp": "net.minecraft.entity.player.EnumPlayerModelParts", "obf": "" },
+            { "id":  "EnumPlayerModelParts", "mcp": "net.minecraft.entity.player.EnumPlayerModelParts", "obf": "ahh" },
             { "id":  "EventHandler", "mcp": "com.sollace.unicopia.EventHandler" }
         ],
         "methods": [
             { "id": "interact", "mcp": "interact", "srg": "func_152433_a", "obf": "a" },
             { "id": "getPlayerInfo", "mcp": "getPlayerInfo", "srg": "func_175155_b", "obf": "b" },
             { "id": "getSkinType", "mcp": "getSkinType", "srg": "func_175154_l", "obf": "l" },
-            { "id": "isWearing", "mcp": "isWearing", "srg": "", "obf": "" }
+            { "id": "isWearing", "mcp": "isWearing", "srg": "func_175148_a", "obf": "a" },
+            { "id": "getEyeHeight", "mcp": "getEyeHeight", "srg": "func_70047_e", "obf": "aR" }
         ]
     },
     "descriptors": [
@@ -21,9 +22,11 @@
         { "id": "getSkinType", "owner": "${AbstractClientPlayer}", "name": "${getSkinType}", "return": "STRING" },
         { "id": "getPlayerInfo", "owner": "${AbstractClientPlayer}", "name": "${getPlayerInfo}", "return": "${NetworkPlayerInfo}"},
         { "id": "isWearing", "owner": "${EntityPlayer}", "name": "${isWearing}", "return": "BOOLEAN", "args": [ "${EnumPlayerModelParts}" ] },
+        { "id": "getEyeHeight", "owner": "${EntityPlayer}", "name": "${getEyeHeight}", "return": "FLOAT" },
         { "id": "onGetSkinType", "owner": "${EventHandler}", "name": "onGetSkinType" },
         { "id": "onGetPlayerInfo", "owner": "${EventHandler}", "name": "onGetPlayerInfo" },
-        { "id": "onIsWearing", "owner": "${EventHandler}", "name": "onIsWearing" }
+        { "id": "onIsWearing", "owner": "${EventHandler}", "name": "onIsWearing" },
+        { "id": "onGetEyeHeight", "owner": "${EventHandler}", "name": "onGetEyeHeight" }
     ],
     "events": [
         {
@@ -61,6 +64,15 @@
         		"method": "${isWearing}"
         	}],
         	"listeners": [ "${onIsWearing}" ]
+        },
+        {
+        	"name": "onGetEyeHeight",
+        	"cancellable": "true",
+        	"injections": [{
+        		"type": "HEAD",
+        		"method": "${getEyeHeight}"
+        	}],
+        	"listeners": [ "${onGetEyeHeight}" ]
         }
     ]
 }

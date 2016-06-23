@@ -17,10 +17,13 @@ import net.minecraft.util.Vec3;
 import net.minecraft.world.World;
 
 import com.sollace.unicopia.UnicopiaPacketChannel;
+import com.blazeloader.api.particles.ApiParticles;
+import com.blazeloader.api.particles.ParticleData;
+import com.blazeloader.util.shape.IShape;
+import com.blazeloader.util.shape.Sphere;
 import com.sollace.unicopia.PlayerExtension;
 import com.sollace.unicopia.Race;
 import com.sollace.unicopia.Unicopia;
-import com.sollace.unicopia.client.ClientSide;
 import com.sollace.unicopia.client.UKeyHandler;
 import com.sollace.unicopia.network.PPacket;
 import com.sollace.util.VecHelper;
@@ -139,19 +142,17 @@ public abstract class Power<T extends IData> {
 		return player.worldObj.getEntitiesWithinAABBExcludingEntity(player, player.getEntityBoundingBox().addCoord(look.xCoord * reach, look.yCoord * reach, look.zCoord * reach).expand((double)var9, (double)var9, (double)var9));
 	}
 	
-	protected void spawnParticles(String particle, EntityPlayer player, int count) {
-		for (int i = 0; i < count; i++) {
-			ClientSide.spawnParticle(particle, player.worldObj,
-				player.posX + player.worldObj.rand.nextFloat()*2 - 1,
-				(player.posY - 0.5) + player.worldObj.rand.nextFloat()*2 + 0.5f,
-				player.posZ + player.worldObj.rand.nextFloat()*2 - 1,
-				0, 0, 0);
-		}
+	protected void spawnParticles(ParticleData data, EntityPlayer player, int count) {
+		double halfDist = player.getEyeHeight() / 1.5;
+		double middle = player.getEntityBoundingBox().minY + halfDist;
+		
+		IShape shape = new Sphere(false, (float)halfDist);
+		ApiParticles.spawnParticleShape(data, player.worldObj, player.posX, middle, player.posZ, shape, count);
 	}
 	
 	protected double getPlayerEyeYPos(EntityPlayer player) {
 		if (player.worldObj.isRemote) {
-			return player.posY - player.getYOffset() + player.getEyeHeight();
+			return player.posY + player.getEyeHeight() - player.getYOffset();
 		}
 		return player.posY + player.getEyeHeight() - 1;
 	}

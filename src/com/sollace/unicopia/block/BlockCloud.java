@@ -112,6 +112,9 @@ public class BlockCloud extends Block {
 			Race species = PlayerSpeciesRegister.getPlayerSpecies((EntityPlayer)e);
 			return species.canInteractWithClouds() || EntityCloud.getFeatherEnchantStrength((EntityPlayer)e) > 0;
 		}
+		if (e instanceof EntityCloud && e.riddenByEntity != null) {
+			return getCanInteract(state, e.riddenByEntity);
+		}
 		return false;
 	}
 	

@@ -7,6 +7,7 @@ import net.minecraft.world.World;
 
 import com.sollace.unicopia.PlayerExtension;
 import com.sollace.unicopia.Race;
+import com.sollace.unicopia.Unicopia;
 import com.sollace.unicopia.entity.EntityCloud;
 
 public abstract class PowerCloudBase extends Power<PowerCloudBase.PegasusData> {
@@ -74,7 +75,7 @@ public abstract class PowerCloudBase extends Power<PowerCloudBase.PegasusData> {
 	public void preApply(EntityPlayer player) {}
 	
 	public void postApply(EntityPlayer player) {
-		spawnParticles("unicorn", player, 10);
+		spawnParticles(Unicopia.Particles.unicorn.getData(), player, 1);
 	}
 	
 	protected class PegasusData implements IData {
