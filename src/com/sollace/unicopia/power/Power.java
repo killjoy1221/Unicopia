@@ -9,11 +9,10 @@ import java.util.List;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.util.BlockPos;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.DamageSource;
-import net.minecraft.util.MovingObjectPosition;
-import net.minecraft.util.MovingObjectPosition.MovingObjectType;
-import net.minecraft.util.Vec3;
+import net.minecraft.util.math.RayTraceResult;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 
 import com.sollace.unicopia.UnicopiaPacketChannel;
@@ -34,9 +33,9 @@ import com.sollace.util.VecHelper;
  * @param <T>	The type of data used when communicating
  */
 public abstract class Power<T extends IData> {
-	public static ArrayList<Power> powerRegistry = new ArrayList<Power>();
-	private static HashMap<String, Power> nameToPowerMap = new HashMap<String, Power>();
-	private static HashMap<Integer, ArrayList<Power>> keyToPower = new HashMap<Integer, ArrayList<Power>>();
+	public static ArrayList<Power<? extends IData>> powerRegistry = new ArrayList<Power<?>>();
+	private static HashMap<String, Power<? extends IData>> nameToPowerMap = new HashMap<String, Power<?>>();
+	private static HashMap<Integer, ArrayList<Power<? extends IData>>> keyToPower = new HashMap<Integer, ArrayList<Power<?>>>();
 	
 	private final String Category;
 	private final String Name;
@@ -46,9 +45,9 @@ public abstract class Power<T extends IData> {
 		return keyToPower.containsKey(key);
 	}
 	
-	public static Power getCapablePowerFromKey(int key, Race race) {
+	public static Power<? extends IData> getCapablePowerFromKey(int key, Race race) {
 		if (keyToPower.containsKey(key)) {
-			for (Power i : keyToPower.get(key)) {
+			for (Power<?> i : keyToPower.get(key)) {
 				if (i.canUse(race)) {
 					return i;
 				}
@@ -57,9 +56,10 @@ public abstract class Power<T extends IData> {
 		return null;
 	}
 	
-	public static Power powerFromName(String name) {
+	@SuppressWarnings("unchecked")
+	public static <T extends IData> Power<T> powerFromName(String name) {
 		if (nameToPowerMap.containsKey(name)) {
-			return nameToPowerMap.get(name);
+			return (Power<T>) nameToPowerMap.get(name);
 		}
 		return null;
 	}
@@ -76,7 +76,7 @@ public abstract class Power<T extends IData> {
 		nameToPowerMap.put(name, this);
 		
 		if (!keyToPower.containsKey(Key)) {
-			keyToPower.put(Key, new ArrayList<Power>());
+			keyToPower.put(Key, new ArrayList<Power<?>>());
 		}
 		keyToPower.get(Key).add(this);
 		
@@ -98,9 +98,9 @@ public abstract class Power<T extends IData> {
 	}
 		
 	public final boolean Activated(EntityPlayer p, World w) {
-		IData data = tryActivate(p, w);
+		T data = tryActivate(p, w);
 		if (data != null) {
-			UnicopiaPacketChannel.instance().sendToServer(new PPacket.Message(this, data));
+			UnicopiaPacketChannel.instance().sendToServer(new PPacket.Message<T>(this, data));
 			return true;
 		}
 		return false;
@@ -114,7 +114,7 @@ public abstract class Power<T extends IData> {
 			int food = (int)(player.getFoodStats().getFoodLevel() - foodSubtract);
 			if (food < 0) {
 				player.getFoodStats().addStats(-player.getFoodStats().getFoodLevel(), 0);
-				player.attackEntityFrom(DamageSource.magic, -food);
+				player.attackEntityFrom(DamageSource.MAGIC, -food);
 			} else {
 				player.getFoodStats().addStats((int)-foodSubtract, 0);
 			}
@@ -126,8 +126,8 @@ public abstract class Power<T extends IData> {
 	 * Gets the entity the player is currently looking at, or null.
 	 */
 	protected Entity getLookedAtEntity(EntityLivingBase e, int reach) {
-		MovingObjectPosition objectMouseOver = VecHelper.getObjectMouseOver(e, reach, 1f);
-		if (objectMouseOver != null && objectMouseOver.typeOfHit == MovingObjectType.ENTITY) {
+		RayTraceResult objectMouseOver = VecHelper.getObjectMouseOver(e, reach, 1f);
+		if (objectMouseOver != null && objectMouseOver.typeOfHit == RayTraceResult.Type.ENTITY) {
 			return objectMouseOver.entityHit;
 		}
 		return null;
@@ -137,9 +137,9 @@ public abstract class Power<T extends IData> {
 	 * Gets all entities within a given range from the player.
 	 */
 	public static List<Entity> getWithinRange(EntityPlayer player, double reach) {
-		Vec3 look = player.getLook(0);
+		Vec3d look = player.getLook(0);
 		float var9 = 1.0F;
-		return player.worldObj.getEntitiesWithinAABBExcludingEntity(player, player.getEntityBoundingBox().addCoord(look.xCoord * reach, look.yCoord * reach, look.zCoord * reach).expand((double)var9, (double)var9, (double)var9));
+		return player.world.getEntitiesWithinAABBExcludingEntity(player, player.getEntityBoundingBox().expand(look.x * reach, look.y * reach, look.z * reach).expand((double)var9, (double)var9, (double)var9));
 	}
 	
 	protected void spawnParticles(ParticleData data, EntityPlayer player, int count) {
@@ -147,11 +147,11 @@ public abstract class Power<T extends IData> {
 		double middle = player.getEntityBoundingBox().minY + halfDist;
 		
 		IShape shape = new Sphere(false, (float)halfDist);
-		ApiParticles.spawnParticleShape(data, player.worldObj, player.posX, middle, player.posZ, shape, count);
+		ApiParticles.spawnParticleShape(data, player.world, player.posX, middle, player.posZ, shape, count);
 	}
 	
 	protected double getPlayerEyeYPos(EntityPlayer player) {
-		if (player.worldObj.isRemote) {
+		if (player.world.isRemote) {
 			return player.posY + player.getEyeHeight() - player.getYOffset();
 		}
 		return player.posY + player.getEyeHeight() - 1;

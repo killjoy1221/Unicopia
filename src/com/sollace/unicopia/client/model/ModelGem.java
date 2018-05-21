@@ -11,7 +11,7 @@ import net.minecraft.client.model.PositionTextureVertex;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.entity.Entity;
-import net.minecraft.util.MathHelper;
+import net.minecraft.util.math.MathHelper;
 
 public class ModelGem extends ModelBase {
 	
@@ -26,7 +26,7 @@ public class ModelGem extends ModelBase {
 		
 		body.offsetY = 1.2f;
 		
-		ModelQuads quad = new ModelQuads();
+		ModelQuads quad = new ModelQuads(body);
 		int s = 1;
 		
 		textureWidth = textureHeight = 256;
@@ -90,10 +90,10 @@ public class ModelGem extends ModelBase {
 		GlStateManager.pushMatrix();
 		EntitySpell spell = (EntitySpell)entity;
 		
-		float var15 = MathHelper.sin(((float)spell.getAge() + stutter) / 10.0F + spell.hoverStart) * 0.1F + 0.1F;
+		float var15 = MathHelper.sin(((float)spell.ticksExisted + stutter) / 10.0F + spell.hoverStart) * 0.1F + 0.1F;
         GlStateManager.translate(0, var15, 0);
 		
-        var15 = ((float)spell.getAge() + stutter) / 20;
+        var15 = ((float)spell.ticksExisted + stutter) / 20;
         if (spell.getLevel() > 0) {
         	var15 *= spell.getLevel() + 1;
         }
@@ -120,7 +120,7 @@ public class ModelGem extends ModelBase {
         
 		body.render(scale);
 		
-		int var12 = entity.getBrightnessForRender(stutter);
+		int var12 = entity.getBrightnessForRender();
 		var10 = var12 % 65536;
         var11 = var12 / 65536;
 		OpenGlHelper.setLightmapTextureCoords(OpenGlHelper.lightmapTexUnit, (float)var10 / 1.0F, (float)var11 / 1.0F);

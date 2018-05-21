@@ -1,12 +1,12 @@
 package com.sollace.unicopia.client.particle;
 
-import net.minecraft.client.particle.EntityFX;
+import net.minecraft.client.particle.Particle;
 import net.minecraft.client.particle.IParticleFactory;
-import net.minecraft.client.renderer.WorldRenderer;
+import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.entity.Entity;
 import net.minecraft.world.World;
 
-public class EntityMagicFX extends EntityFX {
+public class EntityMagicFX extends Particle {
     private float portalParticleScale;
     private double portalPosX;
     private double portalPosY;
@@ -22,7 +22,7 @@ public class EntityMagicFX extends EntityFX {
         portalPosZ = posZ = z;
         portalParticleScale = particleScale = rand.nextFloat() * 0.2F + 0.5F;
         particleMaxAge = (int)(Math.random() * 10) + 40;
-        noClip = true;
+        
         setParticleTextureIndex((int)(Math.random() * 8));
 		
         particleRed = particleGreen = particleBlue = 1;
@@ -39,7 +39,7 @@ public class EntityMagicFX extends EntityFX {
         }
     }
 	
-	public void renderParticle(WorldRenderer renderer, Entity e, float p_70539_2_, float p_70539_3_, float p_70539_4_, float p_70539_5_, float p_70539_6_, float p_70539_7_) {
+	public void renderParticle(BufferBuilder renderer, Entity e, float p_70539_2_, float p_70539_3_, float p_70539_4_, float p_70539_5_, float p_70539_6_, float p_70539_7_) {
         float f6 = 1 - ((particleAge + p_70539_2_) / particleMaxAge);
         f6 = 1 - f6 * f6;
         particleScale = portalParticleScale * f6;
@@ -57,12 +57,6 @@ public class EntityMagicFX extends EntityFX {
         if (k > 240) k = 240;
         return j | k << 16;
     }
-    
-    public float getBrightness(float p_70013_1_) {
-        float f2 = (float)particleAge / (float)particleMaxAge;
-        f2 = f2 * f2 * f2 * f2;
-        return super.getBrightness(p_70013_1_) * (1.0F - f2) + f2;
-    }
 	
     public void onUpdate() {
     	prevPosX = posX;
@@ -73,12 +67,12 @@ public class EntityMagicFX extends EntityFX {
         posX = portalPosX + motionX * var1;
         posY = portalPosY + motionY;
         posZ = portalPosZ + motionZ * var1;
-        if (particleAge++ >= particleMaxAge) setDead();
+        if (particleAge++ >= particleMaxAge) setExpired();
     }
     
     public static class Factory implements IParticleFactory {
 		@Override
-		public EntityFX getEntityFX(int id, World w, double x, double y, double z, double vX, double vY, double vZ, int... args) {
+		public Particle createParticle(int id, World w, double x, double y, double z, double vX, double vY, double vZ, int... args) {
 			return new EntityMagicFX(w, x, y, z, vX, vY, vZ);
 		}
     }

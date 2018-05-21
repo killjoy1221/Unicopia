@@ -15,8 +15,8 @@ import com.sollace.unicopia.server.PlayerSpeciesRegister;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.util.AxisAlignedBB;
-import net.minecraft.util.Vec3;
+import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 
 public class SpellAttractor extends SpellShield {
@@ -44,8 +44,8 @@ public class SpellAttractor extends SpellShield {
 		
 		ParticleData data = Particles.unicorn.getData();
 		for (int i = 0; i < 10; i++) {
-			Vec3 pos = cone.computePoint(w.rand);
-			data.setVel(pos.xCoord / 3, pos.yCoord / 3, pos.zCoord / 3);
+			Vec3d pos = cone.computePoint(w.rand);
+			data.setVel(pos.x / 3, pos.y / 3, pos.z / 3);
 			data.setPos(pos.addVector(x, y, z));
 			ApiParticles.spawnParticle(data, w);
 		}

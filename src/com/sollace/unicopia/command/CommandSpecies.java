@@ -15,14 +15,15 @@ import net.minecraft.command.ICommandSender;
 import net.minecraft.command.WrongUsageException;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.BlockPos;
-import net.minecraft.util.ChatComponentText;
-import net.minecraft.util.ChatComponentTranslation;
-import net.minecraft.util.EnumChatFormatting;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.TextComponentString;
+import net.minecraft.util.text.TextComponentTranslation;
+import net.minecraft.util.text.TextFormatting;
 
 public class CommandSpecies extends CommandBase {
 
-	public String getCommandName() {
+	public String getName() {
 		return "race";
 	}
 	
@@ -30,8 +31,8 @@ public class CommandSpecies extends CommandBase {
         return 0;
     }
     
-    public boolean canCommandSenderUseCommand(ICommandSender sender) {
-        return sender.canCommandSenderUseCommand(getRequiredPermissionLevel(), "help");
+    public boolean checkPermission(MinecraftServer server, ICommandSender sender) {
+        return sender.canUseCommand(getRequiredPermissionLevel(), "help");
     }
     
     private String getRacesString() {
@@ -45,13 +46,13 @@ public class CommandSpecies extends CommandBase {
 		return values;
     }
     
-	public String getCommandUsage(ICommandSender sender) {
+	public String getUsage(ICommandSender sender) {
 		return "commands.race.usage";
 	}
 
-	public void processCommand(ICommandSender sender, String[] args) throws CommandException {
+	public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
 		if (args.length < 1) {
-			throw new WrongUsageException(getCommandUsage(sender));
+			throw new WrongUsageException(getUsage(sender));
 		}
 		
 		EntityPlayerMP player;
@@ -60,7 +61,7 @@ public class CommandSpecies extends CommandBase {
 		if (args[0].contentEquals("set")) playerIndex++;
 		
 		if (args.length > playerIndex) {
-			player = getPlayer(sender, args[playerIndex]);
+			player = getPlayer(server, sender, args[playerIndex]);
 		} else {
 			player = getCommandSenderAsPlayer(sender);
 		}
@@ -75,23 +76,23 @@ public class CommandSpecies extends CommandBase {
 					}
 				} catch (Throwable e) { }
 				if (species == null) {
-					player.addChatMessage(new ChatComponentTranslation("commands.race.fail", args[1].toUpperCase()));
+					player.sendMessage(new TextComponentTranslation("commands.race.fail", args[1].toUpperCase()));
 				} else {
 					if (PlayerSpeciesRegister.getSpeciesPermitted(species)) {
 						PlayerSpeciesRegister.setPlayerSpecies(player, species);
 						PlayerExtension.get(player).updateIsFlying(species, player.capabilities.isFlying);
 						UnicopiaPacketChannel.instance().sendToClient(new UpdateSpeciesPacket.Message(species, player.capabilities.isFlying, true), player);
 						
-						ChatComponentTranslation formattedName = new ChatComponentTranslation(species.name().toLowerCase());
+						TextComponentTranslation formattedName = new TextComponentTranslation(species.name().toLowerCase());
 						
 						if (player != sender) {
-							notifyOperators(sender, this, 1, "commands.race.success.other", player.getCommandSenderName(), formattedName);
+							notifyCommandListener(sender, this, 1, "commands.race.success.other", player.getName(), formattedName);
 			            } else {
-			            	player.addChatMessage(new ChatComponentTranslation("commands.race.success.self"));
-			            	notifyOperators(sender, this, 1, "commands.race.success.otherself", player.getCommandSenderName(), formattedName);
+			            	player.sendMessage(new TextComponentTranslation("commands.race.success.self"));
+			            	notifyCommandListener(sender, this, 1, "commands.race.success.otherself", player.getName(), formattedName);
 			            }
 					} else {
-						player.addChatMessage(new ChatComponentTranslation("commands.race.permission"));
+						player.sendMessage(new TextComponentTranslation("commands.race.permission"));
 					}
 				}
 			}
@@ -99,26 +100,25 @@ public class CommandSpecies extends CommandBase {
 			Race spec = PlayerSpeciesRegister.getPlayerSpecies(player);
 			String name = "commands.race.tell.";
 			name += player == sender ? "self" : "other";
-			ChatComponentTranslation message;
+			TextComponentTranslation message;
 			if (spec.startsWithVowel()) name += ".alt";
-			message = new ChatComponentTranslation(name);
-			ChatComponentText race = new ChatComponentText(spec.displayName());
-			race.getChatStyle().setColor(EnumChatFormatting.GOLD);
+			message = new TextComponentTranslation(name);
+			ITextComponent race = new TextComponentString(spec.displayName());
+			race.getStyle().setColor(TextFormatting.GOLD);
 			message.appendSibling(race);
-			player.addChatMessage(message);
+			player.sendMessage(message);
 		} else if (args[0].contentEquals("list")) {
-			player.addChatMessage(new ChatComponentTranslation("commands.race.list"));
-			ChatComponentText message = new ChatComponentText(" " + getRacesString());
-			message.getChatStyle().setColor(EnumChatFormatting.GOLD);
-			player.addChatMessage(message);
+			player.sendMessage(new TextComponentTranslation("commands.race.list"));
+			ITextComponent message = new TextComponentString(" " + getRacesString());
+			message.getStyle().setColor(TextFormatting.GOLD);
+			player.sendMessage(message);
 		}
 	}
 	
     /**
      * Adds the strings available in this command to the given list of tab completion options.
      */
-    public List addTabCompletionOptions(ICommandSender par1ICommandSender, String[] args, BlockPos pos)
-    {
+    public List<String> getTabCompletions(MinecraftServer server, ICommandSender par1ICommandSender, String[] args, BlockPos pos) {
     	if (args.length == 1) {
     		return getListOfStringsMatchingLastWord(args, new String[] { "get", "set", "list" });
     	} else if (args.length == 2 && args[0].contentEquals("set")) {
@@ -130,16 +130,12 @@ public class CommandSpecies extends CommandBase {
     		}
 			return getListOfStringsMatchingLastWord(args, names.toArray(new String[names.size()]));
     	} else if ((args.length == 3 && args[0].contentEquals("set")) || (args[0].contentEquals("get") && args.length == 2)) {
-    		return getListOfStringsMatchingLastWord(args, getListOfPlayerUsernames());
+    		return getListOfStringsMatchingLastWord(args, server.getOnlinePlayerNames());
     	}
     	
         return null;
     }
-
-    protected String[] getListOfPlayerUsernames() {
-        return MinecraftServer.getServer().getAllUsernames();
-    }
-
+    
     public boolean isUsernameIndex(String[] args, int index) {
     	if (args[0].contentEquals("get")) {
 			return index == 1;

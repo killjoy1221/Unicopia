@@ -22,6 +22,7 @@ public class UnicopiaPacketChannel extends PacketChannel {
 		instance = this;
 	}
 	
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public void init() {
 		registerMessageHandler(Side.SERVER, new PPacket(), PPacket.Message.class, 0);
 		registerMessageHandler(Side.BOTH, new UpdateSpeciesPacket(), UpdateSpeciesPacket.Message.class, 1);

@@ -5,7 +5,7 @@ import com.sollace.unicopia.server.PlayerSpeciesRegister;
 
 import net.minecraft.entity.player.EntityPlayer;
 
-public enum Race implements Predicate {
+public enum Race implements Predicate<EntityPlayer> {
 	EARTH("Earth Pony", false, false),
 	UNICORN("Unicorn", false, true),
 	PEGASUS("Pegasus", true, false),
@@ -76,7 +76,7 @@ public enum Race implements Predicate {
 		return null;
 	}
 	
-	public boolean apply(Object o) {
+	public boolean apply(EntityPlayer o) {
 		return o instanceof EntityPlayer && PlayerSpeciesRegister.getPlayerSpecies((EntityPlayer)o) == this;
 	}
 }

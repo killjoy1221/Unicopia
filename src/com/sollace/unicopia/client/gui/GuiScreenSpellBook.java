@@ -14,6 +14,7 @@ import com.sollace.unicopia.enchanting.IPageUnlockListener;
 import com.sollace.unicopia.enchanting.PagesList;
 import com.sollace.unicopia.enchanting.slot.SlotEnchanting;
 
+import net.acomputerdog.OBFUtil.map.TargetType;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.inventory.GuiContainer;
@@ -21,7 +22,7 @@ import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.texture.TextureUtil;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.Slot;
-import net.minecraft.util.BlockPos;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.ResourceLocation;
 
 public class GuiScreenSpellBook extends GuiContainer implements IPageUnlockListener {
@@ -34,10 +35,10 @@ public class GuiScreenSpellBook extends GuiContainer implements IPageUnlockListe
 	private PageButton nextPage;
 	private PageButton prevPage;
 	
-	private static final Var<GuiContainer, Slot> theSlot = Reflect.lookupField(BLOBF.getField("net.minecraft.client.gui.inventory.GuiContainer.theSlot", OBFLevel.MCP));
+	private static final Var<GuiContainer, Slot> theSlot = Reflect.lookupField(BLOBF.getOBF("net.minecraft.client.gui.inventory.GuiContainer.theSlot", TargetType.FIELD, OBFLevel.MCP));
 	
 	public GuiScreenSpellBook(EntityPlayer player) {
-		super(new ContainerBook(player.inventory, player.worldObj, new BlockPos(player)));
+		super(new ContainerBook(player.inventory, player.world, new BlockPos(player)));
 		player.openContainer = inventorySlots;
 		((ContainerBook)inventorySlots).setListener(this);
 		xSize = 405;
@@ -103,7 +104,7 @@ public class GuiScreenSpellBook extends GuiContainer implements IPageUnlockListe
 
 	protected void drawGradientRect(int left, int top, int width, int height, int startColor, int endColor) {
 		Slot slot = theSlot.get(this, null);
-		if (slot == null || left != slot.xDisplayPosition || top != slot.yDisplayPosition || !drawSlotOverlay(slot)) {
+		if (slot == null || left != slot.xPos || top != slot.yPos || !drawSlotOverlay(slot)) {
 			super.drawGradientRect(left, top, width, height, startColor, endColor);
 		}
 	}
@@ -113,7 +114,7 @@ public class GuiScreenSpellBook extends GuiContainer implements IPageUnlockListe
 			GlStateManager.enableBlend();
 	        GL11.glDisable(GL11.GL_ALPHA_TEST);
 			mc.getTextureManager().bindTexture(spellBookGuiTextures);
-	        drawModalRectWithCustomSizedTexture(slot.xDisplayPosition - 1, slot.yDisplayPosition - 1, 51, 223, 18, 18, 512, 256);
+	        drawModalRectWithCustomSizedTexture(slot.xPos - 1, slot.yPos - 1, 51, 223, 18, 18, 512, 256);
 	        GL11.glEnable(GL11.GL_ALPHA_TEST);
 	        GlStateManager.disableBlend();
 			return true;
@@ -124,7 +125,7 @@ public class GuiScreenSpellBook extends GuiContainer implements IPageUnlockListe
 	protected void drawGuiContainerForegroundLayer(int mouseX, int mouseY) {
 		super.drawGuiContainerForegroundLayer(mouseX, mouseY);
 		String text = (currentPage + 1) + "/" + PagesList.getTotalPages();
-		fontRendererObj.drawString(text, 203 - fontRendererObj.getStringWidth(text)/2, 165, 0x0);
+		fontRenderer.drawString(text, 203 - fontRenderer.getStringWidth(text)/2, 165, 0x0);
 	}
 	
 	@Override
@@ -139,7 +140,7 @@ public class GuiScreenSpellBook extends GuiContainer implements IPageUnlockListe
         GlStateManager.enableBlend();
         GL11.glDisable(GL11.GL_ALPHA_TEST);
         if (playerExtension.hasPageUnlock(currentPage)) {
-        	if (mc.getTextureManager().getTexture(spellBookPageTextures) != TextureUtil.missingTexture) {
+        	if (mc.getTextureManager().getTexture(spellBookPageTextures) != TextureUtil.MISSING_TEXTURE) {
 		        GlStateManager.blendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
 		        mc.getTextureManager().bindTexture(spellBookPageTextures);
 		        drawModalRectWithCustomSizedTexture(left, top, 0, 0, xSize, ySize, 512, 256);
@@ -167,8 +168,8 @@ public class GuiScreenSpellBook extends GuiContainer implements IPageUnlockListe
         
         public void drawButton(Minecraft mc, int mouseX, int mouseY) {
             if (visible) {
-            	int x = xPosition;
-            	int y = yPosition;
+            	int x = this.x;
+            	int y = this.y;
             	if (shakesLeft > 0) {
             		shakeCount += (float)Math.PI/2;
             		if (shakeCount >= Math.PI * 2) {
@@ -179,7 +180,7 @@ public class GuiScreenSpellBook extends GuiContainer implements IPageUnlockListe
 	            	y -= (int)(Math.sin(shakeCount)*3);
             	}
             	
-                boolean hovered = mouseX >= xPosition && mouseY >= yPosition && mouseX < xPosition + width && mouseY < yPosition + height;
+                boolean hovered = mouseX >= this.x && mouseY >= this.y && mouseX < this.x + width && mouseY < this.y + height;
                 GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
                 mc.getTextureManager().bindTexture(spellBookGuiTextures);
                 int u = 0;

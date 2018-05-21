@@ -1,10 +1,10 @@
 package com.sollace.unicopia.item;
 
 import java.util.Iterator;
-import java.util.List;
 
 import com.sollace.unicopia.Settings;
 import com.sollace.unicopia.Unicopia;
+import com.sollace.unicopia.Unicopia.UItems;
 import com.sollace.unicopia.effect.ActionResult;
 import com.sollace.unicopia.effect.IDispenceable;
 import com.sollace.unicopia.effect.IMagicEffect;
@@ -22,17 +22,18 @@ import net.minecraft.dispenser.IBlockSource;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.BlockPos;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.EnumFacing;
-import net.minecraft.util.MovingObjectPosition;
-import net.minecraft.util.MovingObjectPosition.MovingObjectType;
+import net.minecraft.util.EnumHand;
+import net.minecraft.util.NonNullList;
+import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.world.World;
 
 public class ItemSpell extends Item {
 	private static final IBehaviorDispenseItem dispenserBehavior = new BehaviorDefaultDispenseItem() {
 		protected ItemStack dispenseStack(IBlockSource source, ItemStack stack) {
 			if (hasDispenceBehaviour(stack)) {
-				EnumFacing facing = BlockDispenser.getFacing(source.getBlockMetadata());
+				EnumFacing facing = source.getBlockState().getValue(BlockDispenser.FACING);
 				BlockPos pos = source.getBlockPos().offset(facing);
 				IMagicEffect effect = SpellList.forId(stack.getMetadata());
 				ActionResult dispenceResult = ((IDispenceable)effect).onDispenced(pos, facing, source);
@@ -42,7 +43,7 @@ public class ItemSpell extends Item {
 				if (dispenceResult == ActionResult.PLACE) {
 					castContainedSpell(source.getWorld(), pos.getX(), pos.getY(), pos.getZ(), stack, effect);
 				}
-				stack.stackSize--;
+				stack.shrink(1);
 				return stack;
 			}
 			return super.dispenseStack(source, stack);
@@ -55,15 +56,16 @@ public class ItemSpell extends Item {
 		setMaxDamage(0);
 		setUnlocalizedName(name);
         maxStackSize = 16;
-        setCreativeTab(CreativeTabs.tabBrewing);
-        BlockDispenser.dispenseBehaviorRegistry.putObject(this, dispenserBehavior);
+        setCreativeTab(CreativeTabs.BREWING);
+        BlockDispenser.DISPENSE_BEHAVIOR_REGISTRY.putObject(this, dispenserBehavior);
 	}
 	
+	//TODO: Where'd this go?
 	public int getColorFromItemStack(ItemStack stack, int renderPass) {
 		if (renderPass == 1 && (!Unicopia.isClient() || Settings.getSpecies().canCast())) {
 			return SpellList.getGemColour(stack.getMetadata());
 		}
-		return super.getColorFromItemStack(stack, renderPass);
+		return 0;//super.getColorFromItemStack(stack, renderPass);
 	}
 	
 	public boolean hasEffect(ItemStack stack) {
@@ -84,34 +86,34 @@ public class ItemSpell extends Item {
 	    		}
     		}
     		if (result != ActionResult.NONE) {
-    			if (!player.capabilities.isCreativeMode) stack.stackSize--;
+    			if (!player.capabilities.isCreativeMode) stack.shrink(1);
             	return true;
     		}
 		}
     	return false;
     }
 	
-	public ItemStack onItemRightClick(ItemStack stack, World world, EntityPlayer player) {
-		MovingObjectPosition mop = VecHelper.getObjectMouseOver(player, 5, 0);
-		if (mop != null && mop.typeOfHit == MovingObjectType.ENTITY) {
+	public ItemStack onItemRightClick(ItemStack stack, World world, EntityPlayer player, EnumHand hand) {
+		RayTraceResult mop = VecHelper.getObjectMouseOver(player, 5, 0);
+		if (mop != null && mop.typeOfHit == RayTraceResult.Type.ENTITY) {
 			IMagicEffect effect = SpellList.forId(stack.getMetadata());
 			ActionResult result = ActionResult.NONE;
 			if (effect instanceof IUseAction) {
 				result = ((IUseAction)effect).onUse(stack, player, world, mop.entityHit);
 			}
 	        if (result == ActionResult.DEFAULT) {
-	        	if (!player.capabilities.isCreativeMode) stack.stackSize--;
-	        	player.swingItem();
+	        	if (!player.capabilities.isCreativeMode) stack.shrink(1);
+	        	player.swingArm(hand);
 	        }
 		}
         return stack;
     }
 	
-	public void getSubItems(Item item, CreativeTabs tab, List subItems) {
-		super.getSubItems(item, tab, subItems);
+	public void getSubItems(CreativeTabs tab, NonNullList<ItemStack> subItems) {
+		super.getSubItems(tab, subItems);
 		Iterator<Integer> subTypes = SpellList.getIDIterator();
 		while (subTypes.hasNext()) {
-			subItems.add(new ItemStack(item, 1, subTypes.next()));
+			subItems.add(new ItemStack(UItems.spell, 1, subTypes.next()));
 		}
 	}
 	
@@ -126,7 +128,7 @@ public class ItemSpell extends Item {
 		EntitySpell spell = new EntitySpell(world);
         spell.setEffect(effect);
 		spell.setLocationAndAngles(x + 0.5, y + 0.5, z + 0.5, 0, 0);
-    	world.spawnEntityInWorld(spell);
+    	world.spawnEntity(spell);
     	return spell;
 	}
 	

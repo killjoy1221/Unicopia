@@ -8,9 +8,10 @@ import net.minecraft.block.BlockWall;
 import net.minecraft.block.material.MaterialLiquid;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.util.BlockPos;
-import net.minecraft.util.MovingObjectPosition;
-import net.minecraft.util.MovingObjectPosition.MovingObjectType;
+import net.minecraft.init.SoundEvents;
+import net.minecraft.util.SoundCategory;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.world.World;
 
 import com.sollace.unicopia.PlayerExtension;
@@ -55,13 +56,13 @@ public class PowerTeleport extends Power<Power.LocationData> {
 	}
 	
 	private void ApplyTeleport(EntityPlayer player, LocationData data) {
-		player.worldObj.playSoundEffect(player.posX, player.posY, player.posZ, "random.pop", 1.0F, 1.0F);
+		player.world.playSound(player.posX, player.posY, player.posZ, SoundEvents.ENTITY_ITEM_PICKUP, SoundCategory.PLAYERS, 1, 1, true);
 		double distance = player.getDistance(data.x, data.y, data.z) / 10;
-		player.mountEntity(null);
+		player.dismountRidingEntity();
 		player.setPositionAndUpdate(data.x + (player.posX - Math.floor(player.posX)), data.y, data.z + (player.posZ - Math.floor(player.posZ)));
 		TakeFromPlayer(player, distance);
 		player.fallDistance /= distance;
-		player.worldObj.playSoundEffect(data.x, data.y, data.z, "random.pop", 1.0F, 1.0F);
+		player.world.playSound(data.x, data.y, data.z, SoundEvents.ENTITY_ITEM_PICKUP, SoundCategory.PLAYERS, 1, 1, true);
 	}
 	
 	public void preApply(EntityPlayer player) {
@@ -73,11 +74,11 @@ public class PowerTeleport extends Power<Power.LocationData> {
 	}
 	
 	private LocationData SelectCoordinates(EntityPlayer player, World w) {
-		MovingObjectPosition objectMouseOver = VecHelper.getObjectMouseOverExcept(player, 100, 1f, Util.NOT_CLOUDS);
-		if (objectMouseOver != null && objectMouseOver.typeOfHit != MovingObjectType.MISS) {
+		RayTraceResult objectMouseOver = VecHelper.getObjectMouseOverExcept(player, 100, 1f, Util.NOT_CLOUDS);
+		if (objectMouseOver != null && objectMouseOver.typeOfHit != RayTraceResult.Type.MISS) {
 			int x,y,z;
 			
-			if (objectMouseOver.typeOfHit == MovingObjectType.ENTITY) {
+			if (objectMouseOver.typeOfHit == RayTraceResult.Type.ENTITY) {
 				x = (int)objectMouseOver.entityHit.posX;
 				y = (int)objectMouseOver.entityHit.posY;
 				z = (int)objectMouseOver.entityHit.posZ;
@@ -157,13 +158,12 @@ public class PowerTeleport extends Power<Power.LocationData> {
 	
 	private boolean exception(World w, int x, int y, int z) {
 		BlockPos pos = new BlockPos(x,y,z);
-		boolean result = World.doesBlockHaveSolidTopSurface(w, pos);
 		IBlockState state = w.getBlockState(pos);
 		if (state != null) {
-			Block block = state.getBlock();
-			Class c = block.getClass();
-			return result || MaterialLiquid.class.isAssignableFrom(block.getMaterial().getClass()) || BlockWall.class.isAssignableFrom(c) || BlockFence.class.isAssignableFrom(c) || BlockLeaves.class.isAssignableFrom(c);
+			boolean result = state.isTopSolid();
+			Class<?> c = state.getBlock().getClass();
+			return result || MaterialLiquid.class.isAssignableFrom(state.getMaterial().getClass()) || BlockWall.class.isAssignableFrom(c) || BlockFence.class.isAssignableFrom(c) || BlockLeaves.class.isAssignableFrom(c);
 		}
-		return result;
+		return false;
 	}
 }

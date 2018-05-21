@@ -12,7 +12,9 @@ import io.netty.buffer.ByteBuf;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.init.SoundEvents;
 import net.minecraft.util.EnumParticleTypes;
+import net.minecraft.util.SoundCategory;
 import net.minecraft.world.World;
 
 public class PowerDisguise extends Power<Power.EmptyData> {
@@ -59,7 +61,7 @@ public class PowerDisguise extends Power<Power.EmptyData> {
 				}
 			}
 			PlayerExtension.get(player).setDisguise((EntityLivingBase)looked);
-			player.worldObj.playSoundEffect(player.posX, player.posY, player.posZ, "mob.zombie.remedy", 0.5f, 0.5f);
+			player.world.playSound(player.posX, player.posY, player.posZ, SoundEvents.ENTITY_ZOMBIE_VILLAGER_CURE, SoundCategory.PLAYERS, 0.5f, 0.5f, true);
 		}
 	}
 	
@@ -69,9 +71,9 @@ public class PowerDisguise extends Power<Power.EmptyData> {
 			if (disguise.isActive()) {
 				if (!disguise.isPlayer()) {
 					return disguise.getEntity();
-				} else if (!disguise.getPlayer().getGameProfile().getName().equalsIgnoreCase(player.getCommandSenderName())) {
+				} else if (!disguise.getPlayer().getGameProfile().getName().equalsIgnoreCase(player.getName())) {
 					PlayerExtension.get(player).getDisguise().setPlayer(disguise.getPlayer());
-					player.worldObj.playSoundEffect(player.posX, player.posY, player.posZ, "mob.zombie.remedy", 0.5f, 0.5f);
+					player.world.playSound(player.posX, player.posY, player.posZ, SoundEvents.ENTITY_ZOMBIE_VILLAGER_CURE, SoundCategory.PLAYERS, 0.5f, 0.5f, true);
 					return null;
 				}
 			}
@@ -82,24 +84,24 @@ public class PowerDisguise extends Power<Power.EmptyData> {
 	public void preApply(EntityPlayer player) {}
 
 	public void postApply(EntityPlayer player) {
-		if (player.worldObj.rand.nextInt(200) < 120) {
+		if (player.world.rand.nextInt(200) < 120) {
 			ParticleData particle = ParticleData.get(EnumParticleTypes.CRIT_MAGIC, true);
 			for (int i = 0; i < 5; i++) {
 				particle.setPos(
-						player.posX + player.worldObj.rand.nextFloat()*2 - 1,
-						(player.posY) + player.worldObj.rand.nextFloat()*2 - 1,
-						player.posZ + player.worldObj.rand.nextFloat()*2 - 1);
+						player.posX + player.world.rand.nextFloat()*2 - 1,
+						(player.posY) + player.world.rand.nextFloat()*2 - 1,
+						player.posZ + player.world.rand.nextFloat()*2 - 1);
 				particle.setVel(0, 0.25, 0);
-				ApiParticles.spawnParticle(particle, player.worldObj);
+				ApiParticles.spawnParticle(particle, player.world);
 			}
 			particle = ParticleData.get(EnumParticleTypes.FLAME, true);
 			for (int i = 0; i < 5; i++) {
 				particle.setPos(
-						player.posX + player.worldObj.rand.nextFloat()*2 - 1,
-						(player.posY) + player.worldObj.rand.nextFloat()*2 - 1,
-						player.posZ + player.worldObj.rand.nextFloat()*2 - 1);
+						player.posX + player.world.rand.nextFloat()*2 - 1,
+						(player.posY) + player.world.rand.nextFloat()*2 - 1,
+						player.posZ + player.world.rand.nextFloat()*2 - 1);
 				particle.setVel(0, 0.25, 0);
-				ApiParticles.spawnParticle(particle, player.worldObj);
+				ApiParticles.spawnParticle(particle, player.world);
 			}
 		}
 	}

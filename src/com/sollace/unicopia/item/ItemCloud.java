@@ -1,16 +1,18 @@
 package com.sollace.unicopia.item;
 
-import java.util.List;
-
+import com.sollace.unicopia.Unicopia.UItems;
 import com.sollace.unicopia.entity.EntityCloud;
 
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.MathHelper;
-import net.minecraft.util.MovingObjectPosition;
-import net.minecraft.util.MovingObjectPosition.MovingObjectType;
+import net.minecraft.util.ActionResult;
+import net.minecraft.util.EnumActionResult;
+import net.minecraft.util.EnumHand;
+import net.minecraft.util.NonNullList;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.world.World;
 
 public class ItemCloud extends Item {
@@ -21,22 +23,24 @@ public class ItemCloud extends Item {
 		setMaxDamage(0);
 		setUnlocalizedName(name);
         maxStackSize = 16;
-        setCreativeTab(CreativeTabs.tabMaterials);
+        setCreativeTab(CreativeTabs.MATERIALS);
 	}
 	
-    public ItemStack onItemRightClick(ItemStack stack, World world, EntityPlayer player) {
+    public ActionResult<ItemStack> onItemRightClick(World world, EntityPlayer player, EnumHand hand) {
+    	ItemStack stack = player.getHeldItem(hand);
+    	
     	if (!world.isRemote) {
-    		MovingObjectPosition mop = getMovingObjectPositionFromPlayer(world, player, true);
+    		RayTraceResult mop = rayTrace(world, player, true);
     		
     		int x, y, z;
-    		if (mop != null && mop.typeOfHit == MovingObjectType.BLOCK) {
+    		if (mop != null && mop.typeOfHit == RayTraceResult.Type.BLOCK) {
     			x = mop.getBlockPos().getX() + mop.sideHit.getFrontOffsetX();
     			y = mop.getBlockPos().getY() + mop.sideHit.getFrontOffsetY();
     			z = mop.getBlockPos().getZ() + mop.sideHit.getFrontOffsetZ();
     		} else {
-    			x = MathHelper.floor_double(player.posX);
-    			y = MathHelper.floor_double(player.posY);
-    			z = MathHelper.floor_double(player.posZ);
+    			x = MathHelper.floor(player.posX);
+    			y = MathHelper.floor(player.posY);
+    			z = MathHelper.floor(player.posZ);
     		}
     		
             EntityCloud cloud = new EntityCloud(world);
@@ -44,19 +48,20 @@ public class ItemCloud extends Item {
 	    	cloud.setStationary(true);
 	    	cloud.setOpaque(true);
 	    	cloud.setCloudSize(1 + (stack.getItemDamage() % 3));
-	    	world.spawnEntityInWorld(cloud);
-	    	if (!player.capabilities.isCreativeMode) stack.stackSize--;
+	    	world.spawnEntity(cloud);
+	    	if (!player.capabilities.isCreativeMode) stack.shrink(1);
     	}
-        return stack;
+        
+    	return new ActionResult<ItemStack>(EnumActionResult.SUCCESS, stack);
     }
     
     public String getUnlocalizedName(ItemStack stack) {
 		return super.getUnlocalizedName(stack) + "." + CloudSize.byMetadata(stack.getItemDamage()).getName();
     }
     
-    public void getSubItems(Item item, CreativeTabs tab, List subs) {
+    public void getSubItems(CreativeTabs tab, NonNullList<ItemStack> subs) {
         for (CloudSize i : CloudSize.values()) {
-        	subs.add(new ItemStack(item, 1, i.getMetadata()));
+        	subs.add(new ItemStack(UItems.cloud, 1, i.getMetadata()));
         }
     }
     

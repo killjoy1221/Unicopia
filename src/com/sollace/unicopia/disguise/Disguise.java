@@ -1,6 +1,9 @@
 package com.sollace.unicopia.disguise;
 
+import java.util.List;
+
 import com.blazeloader.api.block.ApiBlock;
+import com.blazeloader.api.entity.ApiEntity;
 import com.blazeloader.util.data.INBTWritable;
 import com.blazeloader.util.playerinfo.PlayerIdent;
 import com.sollace.unicopia.server.PlayerSpeciesRegister;
@@ -18,7 +21,8 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.util.AxisAlignedBB;
+import net.minecraft.util.EnumHand;
+import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.world.World;
 
 public class Disguise implements INBTWritable {
@@ -46,13 +50,13 @@ public class Disguise implements INBTWritable {
 			NBTTagCompound copy = new NBTTagCompound();
 			entity.writeToNBT(copy);
 			copy.setBoolean("Invulnerable", true);
-			disguiseEntity = (EntityLivingBase)EntityList.createEntityByID(EntityList.getEntityID(entity), player.worldObj);
-			disguiseEntity.copyDataFromOld(entity);
+			disguiseEntity = (EntityLivingBase)ApiEntity.createEntityByID(ApiEntity.getEntityID(entity), player.world);
+			disguiseEntity.readFromNBT(copy);
 			disguiseEntity.setCustomNameTag(player.getDisplayName().getFormattedText());
 			disguiseEntity.setAlwaysRenderNameTag(true);
 			disguiseEntity.setEntityId(entity.getEntityId());
 			if (disguiseEntity instanceof EntityEnderman) {
-				((EntityEnderman) disguiseEntity).setHeldBlockState(Blocks.air.getDefaultState());
+				((EntityEnderman) disguiseEntity).setHeldBlockState(Blocks.AIR.getDefaultState());
 			}
 		}
 	}
@@ -64,7 +68,7 @@ public class Disguise implements INBTWritable {
             player.height = height;
             AxisAlignedBB bb = player.getEntityBoundingBox();
             player.setEntityBoundingBox(new AxisAlignedBB(bb.minX, bb.minY, bb.minZ, bb.minX + player.width, bb.minY + player.height, bb.minZ + player.width));
-            if (player.width > oldWidth && !player.worldObj.isRemote) {
+            if (player.width > oldWidth && !player.world.isRemote) {
                 //player.moveEntity(oldWidth - player.width, 0, oldWidth - player.width);
             }
         }
@@ -79,24 +83,28 @@ public class Disguise implements INBTWritable {
 			disguiseEntity.posY = player.posY;
 			disguiseEntity.onGround = player.onGround;
 			disguiseEntity.fallDistance = 0;
-			disguiseEntity.setWorld(player.worldObj);
+			disguiseEntity.setWorld(player.world);
 			disguiseEntity.setArrowCountInEntity(player.getArrowCountInEntity());
-			ItemStack[] inv = player.getInventory();
-			for (int i = 0; i < inv.length; i++) {
-				disguiseEntity.setCurrentItemOrArmor(i + 1, inv[i]);
+			List<ItemStack> inv = (List<ItemStack>)player.getArmorInventoryList();
+			List<ItemStack> disguiseInv = (List<ItemStack>)disguiseEntity.getArmorInventoryList();
+			for (int i = 0; i < inv.size(); i++) {
+				disguiseInv.set(i, inv.get(i));
 			}
-			disguiseEntity.setCurrentItemOrArmor(0, player.getHeldItem());
+			
+			disguiseEntity.setHeldItem(EnumHand.MAIN_HAND, player.getHeldItem(EnumHand.MAIN_HAND));
+			disguiseEntity.setHeldItem(EnumHand.OFF_HAND, player.getHeldItem(EnumHand.OFF_HAND));
 			if (disguiseEntity instanceof EntityLiving) {
 				EntityLiving disguise = (EntityLiving) disguiseEntity;
-				if (player.isEntityAlive() && disguise.worldObj.rand.nextInt(1000) < disguise.livingSoundTime++) {
+				if (player.isEntityAlive() && disguise.world.rand.nextInt(1000) < disguise.livingSoundTime++) {
 		            disguise.livingSoundTime = -disguise.getTalkInterval();
 		            disguise.playLivingSound();
 		        }
 			}
 			if (disguiseEntity instanceof EntityEnderman) {
-				ItemStack stack = player.getHeldItem();
-				Block b = stack == null ? Blocks.air : ApiBlock.getBlockByItem(stack.getItem());
-				IBlockState state = stack == null || b == null ? Blocks.air.getDefaultState() : b.getStateFromMeta(stack.getMetadata());
+				ItemStack stack = player.getHeldItemMainhand();
+				Block b = stack.isEmpty() ? Blocks.AIR : ApiBlock.getBlockByItem(stack.getItem());
+				@SuppressWarnings("deprecation")
+				IBlockState state = stack.isEmpty() || b == null ? Blocks.AIR.getDefaultState() : b.getStateFromMeta(stack.getMetadata());
 				((EntityEnderman) disguiseEntity).setHeldBlockState(state);
 			}
 			disguiseEntity.setPosition(player.posX, -30, player.posZ);
@@ -160,7 +168,7 @@ public class Disguise implements INBTWritable {
 		}
 	}
 	
-	public void readFromNBT(NBTTagCompound compound) {
+	public Disguise readFromNBT(NBTTagCompound compound) {
 		if (compound.hasKey("Entity")) {
 			disguiseEntity = (EntityLivingBase)EntityList.createEntityFromNBT(compound.getCompoundTag("Entity"), worldObj);
 			disguisePlayer = null;
@@ -168,5 +176,6 @@ public class Disguise implements INBTWritable {
 			disguiseEntity = null;
 			disguisePlayer = PlayerIdent.create(compound);
 		}
+		return this;
 	}
 }

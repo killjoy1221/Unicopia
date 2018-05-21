@@ -15,9 +15,10 @@ import com.sollace.util.Util;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.init.SoundEvents;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.util.AxisAlignedBB;
-import net.minecraft.util.Vec3;
+import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 
 public class SpellShield extends Spell {
@@ -41,7 +42,7 @@ public class SpellShield extends Spell {
 	
 	public void render(Entity source) {
 		if (Versions.isClient()) {
-			spawnParticles(source.worldObj, source.posX, source.posY, source.posZ, 4 + (strength * 2));
+			spawnParticles(source.getEntityWorld(), source.posX, source.posY, source.posZ, 4 + (strength * 2));
 		}
 	}
 	
@@ -58,8 +59,8 @@ public class SpellShield extends Spell {
 	}
 	
 	public boolean update(Entity source) {
-		applyEntities(null, source, source.worldObj, source.posX, source.posY, source.posZ, strength);
-		if (source.worldObj.getWorldTime() % 50 == 0) {
+		applyEntities(null, source, source.getEntityWorld(), source.posX, source.posY, source.posZ, strength);
+		if (source.getEntityWorld().getWorldTime() % 50 == 0) {
 			double radius = 4 + (strength * 2);
 			if (!Power.TakeFromPlayer((EntityPlayer)source, radius/4)) {
 				setDead();
@@ -85,7 +86,7 @@ public class SpellShield extends Spell {
 					if (projectile) {
 						if (!ApiProjectile.isProjectileThrownBy(i, owner)) {
 							if (dist < radius/2) {
-								i.playSound("mob.zombie.remedy", 0.1f, 1);
+								i.playSound(SoundEvents.ENTITY_ZOMBIE_VILLAGER_CURE, 0.1f, 1);
 								i.setDead();
 							} else {
 								ricochet(i, x, y, z);
@@ -118,14 +119,14 @@ public class SpellShield extends Spell {
 	}
 	
 	private void ricochet(Entity projectile, double x, double y, double z) {
-		Vec3 position = new Vec3(projectile.posX, projectile.posY, projectile.posZ);
-		Vec3 motion = new Vec3(projectile.motionX, projectile.motionY, projectile.motionZ);
+		Vec3d position = new Vec3d(projectile.posX, projectile.posY, projectile.posZ);
+		Vec3d motion = new Vec3d(projectile.motionX, projectile.motionY, projectile.motionZ);
 		
-		Vec3 normal = position.subtract(x, y, z).normalize();
-		Vec3 approach = motion.subtract(normal);
+		Vec3d normal = position.subtract(x, y, z).normalize();
+		Vec3d approach = motion.subtract(normal);
 		
 		if (approach.lengthVector() >= motion.lengthVector()) {
-			ApiProjectile.setThrowableHeading(projectile, normal.xCoord, normal.yCoord, normal.zCoord, (float)motion.lengthVector(), 0);
+			ApiProjectile.setThrowableHeading(projectile, normal.x, normal.y, normal.z, (float)motion.lengthVector(), 0);
 		}
 	}
 	

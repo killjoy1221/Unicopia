@@ -1,24 +1,25 @@
 package com.sollace.unicopia.client.render;
 
 import com.blazeloader.api.client.ApiClient;
+import com.blazeloader.api.client.render.ILivingRenderer;
 import com.sollace.unicopia.PlayerExtension;
 
 import net.minecraft.client.entity.AbstractClientPlayer;
 import net.minecraft.client.model.ModelBase;
 import net.minecraft.client.model.ModelBiped;
-import net.minecraft.client.model.ModelPlayer;
 import net.minecraft.client.model.ModelRenderer;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.entity.RenderManager;
 import net.minecraft.client.renderer.entity.RenderPlayer;
-import net.minecraft.client.renderer.entity.RendererLivingEntity;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.monster.EntitySkeleton;
 import net.minecraft.entity.monster.EntityZombie;
+import net.minecraft.util.EnumHand;
 
 public class RenderChangeling extends RenderPlayer {
 	
-	private static final GenericArrowLayer arrows = new GenericArrowLayer();
+	private static final GenericArrowLayer<EntityLivingBase> arrows = new GenericArrowLayer<EntityLivingBase>();
 	
 	private final ChangelingItemRenderer itemRenderer = new ChangelingItemRenderer(this);
 	
@@ -30,48 +31,49 @@ public class RenderChangeling extends RenderPlayer {
 		EntityLivingBase renderedEntity = PlayerExtension.get(clientPlayer).getDisguise().getEntity();
 		if (renderedEntity != null) {
 			copyAnglesTo(renderedEntity, clientPlayer);
-			RendererLivingEntity r = (RendererLivingEntity)ApiClient.getRenderManager().getEntityRenderObject(renderedEntity);
-			r.layerRenderers.add(arrows);
-			arrows.setRenderer(r);
-			r.doRender(renderedEntity, x, y, z, entityYaw, partialTicks);
-			r.layerRenderers.remove(arrows);
+			ILivingRenderer<EntityLivingBase> r = getEntityRender(renderedEntity);
+			r.addLayer(arrows);
+			arrows.setRenderer(r.unwrap());
+			r.unwrap().doRender(renderedEntity, x, y, z, entityYaw, partialTicks);
+			r.removeLayer(arrows);
 		}
+	}
+	
+	@SuppressWarnings("unchecked")
+	protected ILivingRenderer<EntityLivingBase> getEntityRender(Entity e) {
+		return (ILivingRenderer<EntityLivingBase>)ApiClient.getRenderManager().getEntityRenderObject(e);
 	}
 	
 	public void renderRightArm(AbstractClientPlayer clientPlayer) {
 		EntityLivingBase renderedEntity = PlayerExtension.get(clientPlayer).getDisguise().getEntity();
 		if (renderedEntity != null) {
-			RendererLivingEntity r = ((RendererLivingEntity)ApiClient.getRenderManager().getEntityRenderObject(renderedEntity));
-			ModelBase m = r.getMainModel();
+			ILivingRenderer<EntityLivingBase> r = getEntityRender(renderedEntity);
+			ModelBase m = r.getModel();
 			if (m instanceof ModelBiped) {
 				preRenderArm(r, (ModelBiped)m, renderedEntity);
-				renderArm((ModelBiped)m, getPlayerModel().bipedRightArm, ((ModelBiped) m).bipedRightArm);
+				renderArm((ModelBiped)m, getMainModel().bipedRightArm, ((ModelBiped) m).bipedRightArm);
+			}
+		}
+    }
+	
+	public void renderLeftArm(AbstractClientPlayer clientPlayer) {
+		EntityLivingBase renderedEntity = PlayerExtension.get(clientPlayer).getDisguise().getEntity();
+		if (renderedEntity != null) {
+			ILivingRenderer<EntityLivingBase> r = getEntityRender(renderedEntity);
+			ModelBase m = r.getModel();
+			if (m instanceof ModelBiped) {
+				preRenderArm(r, (ModelBiped)m, renderedEntity);
+				renderArm((ModelBiped)m, getMainModel().bipedLeftArm, ((ModelBiped) m).bipedLeftArm);
 			}
 		}
 		if (renderedEntity instanceof EntityZombie || renderedEntity instanceof EntitySkeleton) {
 			itemRenderer.renderLeftArm(clientPlayer);
 		}
-    }
-	
-	public void renderLeftArm(AbstractClientPlayer clientPlayer) {
-		
 	}
-		
-    public void _renderLeftArm(AbstractClientPlayer clientPlayer) {
-		EntityLivingBase renderedEntity = PlayerExtension.get(clientPlayer).getDisguise().getEntity();
-		if (renderedEntity != null) {
-			RendererLivingEntity r = ((RendererLivingEntity)ApiClient.getRenderManager().getEntityRenderObject(renderedEntity));
-			ModelBase m = r.getMainModel();
-			if (m instanceof ModelBiped) {
-				preRenderArm(r, (ModelBiped)m, renderedEntity);
-				renderArm((ModelBiped)m, getPlayerModel().bipedLeftArm, ((ModelBiped) m).bipedLeftArm);
-			}
-		}
-    }
-    
-    private void preRenderArm(RendererLivingEntity r, ModelBiped m, EntityLivingBase renderedEntity) {
+	
+    private void preRenderArm(ILivingRenderer<EntityLivingBase> r, ModelBiped m, EntityLivingBase renderedEntity) {
     	GlStateManager.color(1, 1, 1);
-		r.bindEntityTexture(renderedEntity);
+		this.bindTexture(r.getTexture(renderedEntity));
 		m.swingProgress = 0;
 		if (m instanceof ModelBiped) {
 			ModelBiped biped = (ModelBiped)m;
@@ -85,19 +87,15 @@ public class RenderChangeling extends RenderPlayer {
 		rY = arm.rotationPointY,
 		rZ = arm.rotationPointZ;
 		ModelBase.copyModelAngles(playerArm, arm);
-		if (m instanceof ModelPlayer) {
-			((ModelPlayer)m).renderRightArm();
-		} else {
-			arm.showModel = true;
-			arm.render(0.0625F);
-		}
+		arm.showModel = true;
+		arm.render(0.0625F);
 		arm.rotationPointX = rX;
 		arm.rotationPointY = rY;
 		arm.rotationPointZ = rZ;
 	}
     
 	public static void copyAnglesTo(EntityLivingBase dest, EntityLivingBase source) {
-		dest.ridingEntity = source.ridingEntity;
+		dest.startRiding(source.getRidingEntity());
 		dest.isSwingInProgress = source.isSwingInProgress;
 		dest.swingProgress = source.swingProgress;
 		dest.prevSwingProgress = source.prevSwingProgress;
@@ -118,5 +116,8 @@ public class RenderChangeling extends RenderPlayer {
 		dest.prevRenderYawOffset = source.prevRenderYawOffset;
 		dest.hurtTime = source.hurtTime;
 		dest.setPosition(source.posX, source.posY, source.posZ);
+		for (EnumHand i : EnumHand.values()) {
+			dest.setHeldItem(i, source.getHeldItem(i));
+		}
 	}
 }

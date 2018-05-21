@@ -11,6 +11,6 @@ import com.sollace.unicopia.network.RequestSpeciesPacket.Message;
 
 public class ClientRequestSpeciesPacket implements IMessageHandler<Message, IMessage, INetHandler> {
 	public IMessage onMessage(Message message, INetHandler ctx) {
-		return new UpdateSpeciesPacket.Message(Settings.getSpecies(), PlayerExtension.get(Minecraft.getMinecraft().thePlayer).isFlying, true);
+		return new UpdateSpeciesPacket.Message(Settings.getSpecies(), PlayerExtension.get(Minecraft.getMinecraft().player).isFlying, true);
 	}
 }

@@ -7,34 +7,40 @@ import com.sollace.unicopia.Unicopia.UItems;
 import com.sollace.unicopia.container.ContainerBook;
 import com.sollace.unicopia.server.PlayerSpeciesRegister;
 
-import net.minecraft.block.Block;
-import net.minecraft.block.Block.SoundType;
-import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.block.SoundType;
+import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.inventory.Container;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.util.BlockPos;
+import net.minecraft.network.datasync.DataParameter;
+import net.minecraft.network.datasync.DataSerializers;
+import net.minecraft.network.datasync.EntityDataManager;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.EnumParticleTypes;
-import net.minecraft.util.IChatComponent;
-import net.minecraft.util.MathHelper;
-import net.minecraft.util.Vec3;
+import net.minecraft.util.SoundCategory;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.text.ITextComponent;
 import net.minecraft.world.World;
 
-public class EntitySpellbook extends EntityLivingBase implements IMagicals, IMousePickHandler {
+public class EntitySpellbook extends EntityLiving implements IMagicals, IMousePickHandler {
 
 	public EntitySpellbook(World worldIn) {
 		super(worldIn);
 		setSize(0.6f, 0.6f);
 	}
 	
+	private static final DataParameter<Boolean> OPENED = EntityDataManager.createKey(EntitySpellbook.class, DataSerializers.BOOLEAN);
+	private static final DataParameter<Byte> OPENED_USER = EntityDataManager.createKey(EntitySpellbook.class, DataSerializers.BYTE);
+	
 	protected void entityInit() {
 		super.entityInit();
-		dataWatcher.addObject(10, (byte)1);
-		dataWatcher.addObject(11, (byte)1);
+		dataManager.register(OPENED, true);
+		dataManager.register(OPENED_USER, (byte)1);
 	}
 	
     protected boolean canTriggerWalking() {return false;}
@@ -44,27 +50,27 @@ public class EntitySpellbook extends EntityLivingBase implements IMagicals, IMou
     public boolean canRenderOnFire() {return false;}
 	
     public boolean getIsOpen() {
-    	return dataWatcher.getWatchableObjectByte(10) == 1;
+    	return dataManager.get(OPENED);
     }
     
     public Boolean getUserSetState() {
-    	byte state = dataWatcher.getWatchableObjectByte(11);
+    	byte state = dataManager.get(OPENED_USER);
     	return state == 1 ? null : state == 2;
     }
     
     public void setIsOpen(boolean val) {
-    	dataWatcher.updateObject(10, val ? (byte)1 : (byte)0);
+    	dataManager.set(OPENED, val);
     }
     
     public void setUserSetState(Boolean val) {
-    	dataWatcher.updateObject(11, val == null ? (byte)1 : val == true ? (byte)2 : (byte)0);
+    	dataManager.set(OPENED_USER, val == null ? (byte)1 : val == true ? (byte)2 : (byte)0);
     }
     
     public void onUpdate() {
     	boolean open = getIsOpen();
 		this.isJumping = open && isInWater();
     	super.onUpdate();
-    	if (open && worldObj.isRemote) {
+    	if (open && world.isRemote) {
 	    	for (int offX = -2; offX <= 1; ++offX) {
 	            for (int offZ = -2; offZ <= 1; ++offZ) {
 	                if (offX > -1 && offX < 1 && offZ == -1) offZ = 1;
@@ -73,15 +79,15 @@ public class EntitySpellbook extends EntityLivingBase implements IMagicals, IMou
 	                    	float vX = (float)offX/2 + rand.nextFloat();
 	                    	float vY = (float)offY/2 - rand.nextFloat() + 0.5f;
 	                    	float vZ = (float)offZ/2 + rand.nextFloat();
-	                        worldObj.spawnParticle(EnumParticleTypes.ENCHANTMENT_TABLE, posX, posY, posZ, vX, vY, vZ, new int[0]);
+	                        world.spawnParticle(EnumParticleTypes.ENCHANTMENT_TABLE, posX, posY, posZ, vX, vY, vZ, new int[0]);
 	                    }
 	                }
 	            }
 	        }
     	}
     	
-    	if (worldObj.rand.nextInt(30) == 0) {
-	    	float celest = worldObj.getCelestialAngle(1) * 4;
+    	if (world.rand.nextInt(30) == 0) {
+	    	float celest = world.getCelestialAngle(1) * 4;
 	    	boolean isDay = celest > 3 || celest < 1;
 	    	Boolean userState = getUserSetState();
 	    	boolean canToggle = (isDay != open) && (userState == null || userState == isDay);
@@ -96,18 +102,18 @@ public class EntitySpellbook extends EntityLivingBase implements IMagicals, IMou
     }
     
 	public boolean attackEntityFrom(DamageSource source, float amount) {
-		if (!worldObj.isRemote) {
+		if (!world.isRemote) {
 			setDead();
-			SoundType sound = Block.soundTypeWood;
-			worldObj.playSoundEffect(posX, posY, posZ, sound.getBreakSound(), sound.getVolume(), sound.getFrequency());
-			if (worldObj.getGameRules().getGameRuleBooleanValue("doTileDrops")) {
+			SoundType sound = SoundType.WOOD;
+			world.playSound(posX, posY, posZ, sound.getBreakSound(), SoundCategory.BLOCKS, sound.getVolume(), sound.getPitch(), true);
+			if (world.getGameRules().getBoolean("doTileDrops")) {
 				entityDropItem(new ItemStack(UItems.spellBook, 1), 0);
 			}
 		}
 		return false;
 	}
 	
-	public boolean interactAt(EntityPlayer player, Vec3 p_174825_2_) {
+	public boolean interactAt(EntityPlayer player, Vec3d p_174825_2_) {
 		if (player.isSneaking()) {
 			boolean open = !getIsOpen();
 			setIsOpen(open);
@@ -148,9 +154,9 @@ public class EntitySpellbook extends EntityLivingBase implements IMagicals, IMou
 	
 	protected float computeRotationChange(float direction, float velocity) {
 		if (direction > 0) {
-	        direction = MathHelper.wrapAngleTo180_float(direction) * 0.3F;
+	        direction = MathHelper.wrapDegrees(direction) * 0.3F;
 	        
-	        float nextRotation = MathHelper.wrapAngleTo180_float(rotationYaw - direction);
+	        float nextRotation = MathHelper.wrapDegrees(rotationYaw - direction);
 	        
 	        boolean angleClip = nextRotation < -90.0F || nextRotation >= 90.0F;
 	        
@@ -177,14 +183,14 @@ public class EntitySpellbook extends EntityLivingBase implements IMagicals, IMou
 	
 	public static class InterfaceBook implements IModInventory {
 		
-		public String getCommandSenderName() {return null;}
+		public String getName() {return null;}
 		
 		public boolean hasCustomName() {return false;}
 		
-		public IChatComponent getDisplayName() {return null;}
+		public ITextComponent getDisplayName() {return null;}
 		
 		public Container createContainer(InventoryPlayer playerInventory, EntityPlayer player) {
-			return new ContainerBook(playerInventory, player.worldObj, new BlockPos(player));
+			return new ContainerBook(playerInventory, player.world, new BlockPos(player));
 		}
 		
 		public String getGuiID() {return "unicopia:book";}
@@ -195,15 +201,13 @@ public class EntitySpellbook extends EntityLivingBase implements IMagicals, IMou
 		
 		public ItemStack decrStackSize(int index, int count) {return null;}
 		
-		public ItemStack getStackInSlotOnClosing(int index) {return null;}
-		
 		public void setInventorySlotContents(int index, ItemStack stack) { }
 		
 		public int getInventoryStackLimit() {return 0;}
 		
 		public void markDirty() { }
 		
-		public boolean isUseableByPlayer(EntityPlayer player) {return false;}
+		public boolean isUsableByPlayer(EntityPlayer player) {return false;}
 		
 		public void openInventory(EntityPlayer player) { }
 		
@@ -218,6 +222,10 @@ public class EntitySpellbook extends EntityLivingBase implements IMagicals, IMou
 		public int getFieldCount() {return 0;}
 		
 		public void clear() { }
+
+		public boolean isEmpty() {return true;}
+
+		public ItemStack removeStackFromSlot(int index) {return null;}
 		
 	}
 	

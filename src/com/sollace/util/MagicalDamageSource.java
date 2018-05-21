@@ -4,12 +4,13 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.ChatComponentTranslation;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.EntityDamageSource;
-import net.minecraft.util.IChatComponent;
-import net.minecraft.util.StatCollector;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.TextComponentTranslation;
+import net.minecraft.util.text.translation.I18n;
 
+@SuppressWarnings("deprecation")
 public class MagicalDamageSource extends EntityDamageSource {
 	
 	public static DamageSource create(String type) {
@@ -33,24 +34,24 @@ public class MagicalDamageSource extends EntityDamageSource {
 		setMagicDamage();
     }
 	
-    public IChatComponent getDeathMessage(EntityLivingBase target) {
-        EntityLivingBase attacker = damageSourceEntity instanceof EntityLivingBase ? (EntityLivingBase)damageSourceEntity : target.func_94060_bK();
+	public ITextComponent getDeathMessage(EntityLivingBase target) {
+        Entity attacker = damageSourceEntity instanceof EntityLivingBase ? (EntityLivingBase)damageSourceEntity : target.getRidingEntity();
         String basic = "death.attack." + this.damageType;
         
-        if (attacker != null) {
+        if (attacker != null && attacker instanceof EntityLivingBase) {
         	String withAttecker = basic + ".player";
-	        ItemStack held = attacker instanceof EntityLivingBase ? attacker.getHeldItem() : null;
+	        ItemStack held = attacker instanceof EntityLivingBase ? ((EntityLivingBase)attacker).getHeldItemMainhand() : ItemStack.EMPTY;
 	        
 	        String withItem = withAttecker + ".item";
-	        if (held != null && held.hasDisplayName() && StatCollector.canTranslate(withItem)) {
-	        	return new ChatComponentTranslation(withItem, target.getDisplayName(), attacker.getDisplayName(), held.getChatComponent());
+	        if (held != null && held.hasDisplayName() && I18n.canTranslate(withItem)) {
+	        	return new TextComponentTranslation(withItem, target.getDisplayName(), attacker.getDisplayName(), held.getTextComponent());
 	        }
 	        
-	        if (StatCollector.canTranslate(withAttecker)) {
-	        	return new ChatComponentTranslation(withAttecker, target.getDisplayName(), attacker.getDisplayName());
+	        if (I18n.canTranslate(withAttecker)) {
+	        	return new TextComponentTranslation(withAttecker, target.getDisplayName(), attacker.getDisplayName());
 	        }
 	    }
         
-    	return new ChatComponentTranslation(basic, target.getDisplayName());
+    	return new TextComponentTranslation(basic, target.getDisplayName());
     }
 }

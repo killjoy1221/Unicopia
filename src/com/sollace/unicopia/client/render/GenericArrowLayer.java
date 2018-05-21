@@ -6,28 +6,29 @@ import net.minecraft.client.model.ModelBox;
 import net.minecraft.client.model.ModelRenderer;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.RenderHelper;
-import net.minecraft.client.renderer.entity.RendererLivingEntity;
+import net.minecraft.client.renderer.entity.RenderLivingBase;
 import net.minecraft.client.renderer.entity.layers.LayerRenderer;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.projectile.EntityArrow;
-import net.minecraft.util.MathHelper;
+import net.minecraft.entity.projectile.EntityTippedArrow;
+import net.minecraft.util.math.MathHelper;
 
-public class GenericArrowLayer implements LayerRenderer {
-    private RendererLivingEntity renderer;
+public class GenericArrowLayer<T extends EntityLivingBase> implements LayerRenderer<T> {
+    private RenderLivingBase<T> renderer;
     
     public GenericArrowLayer() {
         
     }
     
-    public void setRenderer(RendererLivingEntity r) {
+    public void setRenderer(RenderLivingBase<T> r) {
     	renderer = r;
     }
 
-    public void doRenderLayer(EntityLivingBase entitylivingbaseIn, float p_177141_2_, float p_177141_3_, float partialTicks, float p_177141_5_, float p_177141_6_, float p_177141_7_, float scale) {
+    public void doRenderLayer(T entitylivingbaseIn, float p_177141_2_, float p_177141_3_, float partialTicks, float p_177141_5_, float p_177141_6_, float p_177141_7_, float scale) {
         int arrows = entitylivingbaseIn.getArrowCountInEntity();
 
         if (arrows > 0) {
-            EntityArrow var10 = new EntityArrow(entitylivingbaseIn.worldObj, entitylivingbaseIn.posX, entitylivingbaseIn.posY, entitylivingbaseIn.posZ);
+            EntityArrow arrow = new EntityTippedArrow(entitylivingbaseIn.world, entitylivingbaseIn.posX, entitylivingbaseIn.posY, entitylivingbaseIn.posZ);
             Random var11 = new Random((long)entitylivingbaseIn.getEntityId());
             RenderHelper.disableStandardItemLighting();
 
@@ -49,13 +50,11 @@ public class GenericArrowLayer implements LayerRenderer {
                 var15 *= -1.0F;
                 var16 *= -1.0F;
                 var17 *= -1.0F;
-                float var21 = MathHelper.sqrt_float(var15 * var15 + var17 * var17);
-                var10.prevRotationYaw = var10.rotationYaw = (float)(Math.atan2((double)var15, (double)var17) * 180.0D / Math.PI);
-                var10.prevRotationPitch = var10.rotationPitch = (float)(Math.atan2((double)var16, (double)var21) * 180.0D / Math.PI);
-                double var22 = 0.0D;
-                double var24 = 0.0D;
-                double var26 = 0.0D;
-                renderer.getRenderManager().renderEntityWithPosYaw(var10, var22, var24, var26, 0.0F, partialTicks);
+                float var21 = MathHelper.sqrt(var15 * var15 + var17 * var17);
+                arrow.prevRotationYaw = arrow.rotationYaw = (float)(Math.atan2((double)var15, (double)var17) * 180.0D / Math.PI);
+                arrow.prevRotationPitch = arrow.rotationPitch = (float)(Math.atan2((double)var16, (double)var21) * 180.0D / Math.PI);
+                
+                renderer.getRenderManager().doRenderEntity(arrow, 0, 0, 0, 0, partialTicks, false);
                 GlStateManager.popMatrix();
             }
 

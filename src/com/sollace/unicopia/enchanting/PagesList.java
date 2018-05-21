@@ -76,10 +76,10 @@ public class PagesList {
 	
 	private static boolean unlockPages(PlayerExtension prop, ItemStack stack) {
 		boolean result = false;
-		if (stack != null && stack.stackSize > 0) {
+		if (stack != null && stack.getCount() > 0) {
 			for (PageEvent i : pageEvents) {
 				if (i.matches(prop, stack)) {
-					int page = i.getPage(stack.stackSize);
+					int page = i.getPage(stack.getCount());
 					if (page >= 0 && prop.unlockPage(page)) {
 						result |= unreadPages.add(page);
 					}

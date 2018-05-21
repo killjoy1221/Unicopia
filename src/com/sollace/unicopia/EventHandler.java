@@ -7,9 +7,9 @@ import net.minecraft.entity.passive.EntityVillager;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.entity.player.EnumPlayerModelParts;
+import net.minecraft.init.MobEffects;
 import net.minecraft.item.ItemFood;
 import net.minecraft.item.ItemStack;
-import net.minecraft.potion.Potion;
 import net.minecraft.potion.PotionEffect;
 import net.minecraft.stats.StatList;
 
@@ -29,7 +29,7 @@ public class EventHandler {
 	
 	public void onEntityJoinWorld(Entity entity) {
 		if (entity instanceof EntityPlayer) {
-			if (!entity.worldObj.isRemote && entity instanceof EntityPlayerMP) {
+			if (!entity.world.isRemote && entity instanceof EntityPlayerMP) {
 				UnicopiaPacketChannel.instance().sendToClient(new RequestSpeciesPacket.Message(), (EntityPlayerMP)entity);
 			}
 		}
@@ -48,14 +48,14 @@ public class EventHandler {
 	}*/
 	
 	public void onPlayerFall(EntityPlayer player, FallEventArgs event) {
-		if (player.worldObj.isRemote == false) {
+		if (player.world.isRemote == false) {
 			if (PlayerSpeciesRegister.getPlayerSpecies(player).canFly()) {
 				PlayerExtension prop = PlayerExtension.get(player);
 				float distance = event.getFallDistance();
 				if (prop.ticksSinceLanding > 1) {
 					prop.ticksSinceLanding = 0;
 			        if (player.fallDistance >= 2.0F) {
-			            player.addStat(StatList.distanceFallenStat, (int)Math.round(distance * 100));
+			            player.addStat(StatList.FALL_ONE_CM, (int)Math.round(distance * 100));
 			        }
 			        prop.fall(distance, event.getDamageMultiplier());
 				}
@@ -67,8 +67,8 @@ public class EventHandler {
 	public void onPlayerRightClick(EntityPlayer player, ItemStack item) {
 		if (item.getItem() instanceof ItemFood) {
 			if (PlayerSpeciesRegister.getPlayerSpecies(player) == Race.CHANGELING) {
-				player.addPotionEffect(new PotionEffect(Potion.weakness.id, 2000, 2));
-				player.addPotionEffect(new PotionEffect(Potion.confusion.id, 2000, 2));
+				player.addPotionEffect(new PotionEffect(MobEffects.WEAKNESS, 2000, 2));
+				player.addPotionEffect(new PotionEffect(MobEffects.NAUSEA, 2000, 2));
 			}
 		}
 	}

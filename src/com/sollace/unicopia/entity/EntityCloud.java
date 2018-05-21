@@ -4,10 +4,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
-import net.minecraft.block.Block;
 import net.minecraft.block.BlockCrops;
 import net.minecraft.block.BlockFarmland;
 import net.minecraft.block.BlockFire;
+import net.minecraft.block.SoundType;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.enchantment.Enchantment;
@@ -20,7 +20,9 @@ import net.minecraft.entity.effect.EntityLightningBolt;
 import net.minecraft.entity.passive.IAnimals;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
+import net.minecraft.init.Enchantments;
 import net.minecraft.init.Items;
+import net.minecraft.init.SoundEvents;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemMonsterPlacer;
@@ -28,14 +30,21 @@ import net.minecraft.item.ItemSpade;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemSword;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.util.AxisAlignedBB;
-import net.minecraft.util.BlockPos;
+import net.minecraft.network.datasync.DataParameter;
+import net.minecraft.network.datasync.DataSerializers;
+import net.minecraft.network.datasync.EntityDataManager;
+import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.DamageSource;
+import net.minecraft.util.EnumActionResult;
 import net.minecraft.util.EnumFacing;
+import net.minecraft.util.EnumHand;
 import net.minecraft.util.EnumParticleTypes;
-import net.minecraft.util.MathHelper;
-import net.minecraft.util.MovingObjectPosition;
-import net.minecraft.util.Vec3;
+import net.minecraft.util.SoundCategory;
+import net.minecraft.util.SoundEvent;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.RayTraceResult;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 
 import com.blazeloader.api.particles.ApiParticles;
@@ -59,30 +68,36 @@ public class EntityCloud extends EntityFlying implements IAnimals {
 		super(par1World);
 		preventEntitySpawning = false;
 		ignoreFrustumCheck = true;
-		if (worldObj.rand.nextInt(20) == 0 && canRainHere()) {
+		if (world.rand.nextInt(20) == 0 && canRainHere()) {
 			setRaining();
-			if (worldObj.rand.nextInt(20) == 0) {
+			if (world.rand.nextInt(20) == 0) {
 				setIsThundering(true);
 			}
 		}
 		setCloudSize(1 + rand.nextInt(3));
 	}
 	
+	private static final DataParameter<Integer> RAINTIMER = EntityDataManager.createKey(EntityCloud.class, DataSerializers.VARINT);
+	private static final DataParameter<Boolean> THUNDERING = EntityDataManager.createKey(EntityCloud.class, DataSerializers.BOOLEAN);
+	private static final DataParameter<Integer> SCALE = EntityDataManager.createKey(EntityCloud.class, DataSerializers.VARINT);
+	private static final DataParameter<Boolean> STATIONARY = EntityDataManager.createKey(EntityCloud.class, DataSerializers.BOOLEAN);
+	private static final DataParameter<Boolean> OPAQUE = EntityDataManager.createKey(EntityCloud.class, DataSerializers.BOOLEAN);
+	
 	protected void entityInit() {
         super.entityInit();
-        dataWatcher.addObject(12, (Integer)0);
-        dataWatcher.addObject(13, new Byte((byte)0));
-        dataWatcher.addObject(14, new Byte((byte)1));
-        dataWatcher.addObject(16, new Byte((byte)0));
-        dataWatcher.addObject(17, new Byte((byte)0));
+        dataManager.register(RAINTIMER, 0);
+        dataManager.register(THUNDERING, false);
+        dataManager.register(SCALE, 1);
+        dataManager.register(STATIONARY, false);
+        dataManager.register(OPAQUE, false);
     }
 	
-    protected String getHurtSound() {
-    	return "step.cloth";
+    protected SoundEvent getHurtSound(DamageSource damageSource) {
+    	return SoundEvents.BLOCK_CLOTH_HIT;
 	}
     
-    protected String getDeathSound() {
-    	return "step.cloth";
+    protected SoundEvent getDeathSound() {
+    	return SoundEvents.BLOCK_CLOTH_STEP;
 	}
     
     protected Item getDropItem() {
@@ -130,8 +145,8 @@ public class EntityCloud extends EntityFlying implements IAnimals {
     }
     
     protected void checkLocation() {
-    	if (posY < worldObj.provider.getCloudHeight() - 18) {
-    		setLocationAndAngles(posX, worldObj.provider.getCloudHeight() - 18, posZ, rotationYaw, rotationPitch);
+    	if (posY < world.provider.getCloudHeight() - 18) {
+    		setLocationAndAngles(posX, world.provider.getCloudHeight() - 18, posZ, rotationYaw, rotationPitch);
         }
     	super.collideWithNearbyEntities();
     }
@@ -156,25 +171,25 @@ public class EntityCloud extends EntityFlying implements IAnimals {
     public void onUpdate() {
     	AxisAlignedBB boundingbox = getEntityBoundingBox();
     	if (getIsRaining()) {
-    		if (worldObj.isRemote) {
+    		if (world.isRemote) {
     			for (int i = 0; i < 30 * getCloudSize(); i++) {
 		    		double x = posX + randomIn(rand, boundingbox.minX, boundingbox.maxX);
 		    		double y = getEntityBoundingBox().minY + height/2;
 		    		double z = posZ + randomIn(rand, boundingbox.minX, boundingbox.maxX);
 		    		if (canSnowHere(new BlockPos(x, y, z))) {
-		    			worldObj.spawnParticle(EnumParticleTypes.SNOW_SHOVEL, x, y, z, 0, 0, 0);
+		    			world.spawnParticle(EnumParticleTypes.SNOW_SHOVEL, x, y, z, 0, 0, 0);
 		    		} else {
-		    			ApiParticles.spawnParticle(data.setPos(x, y, z), worldObj);
+		    			ApiParticles.spawnParticle(data.setPos(x, y, z), world);
 		    		}
 	    		}
     			AxisAlignedBB rainedArea = boundingbox.expand(1, 0, 1);
-    			rainedArea = AxisAlignedBB.fromBounds(boundingbox.minX, rainedArea.minY - (posY - getBlockUnder(new BlockPos(posX, posY, posZ))), boundingbox.minZ, boundingbox.maxX, boundingbox.maxY, boundingbox.maxZ);
+    			rainedArea = new AxisAlignedBB(boundingbox.minX, rainedArea.minY - (posY - getBlockUnder(new BlockPos(posX, posY, posZ))), boundingbox.minZ, boundingbox.maxX, boundingbox.maxY, boundingbox.maxZ);
     			
-    			List<EntityPlayer> players = worldObj.getEntitiesWithinAABB(EntityPlayer.class, rainedArea);
+    			List<EntityPlayer> players = world.getEntitiesWithinAABB(EntityPlayer.class, rainedArea);
     			if (players != null) {
     				for (EntityPlayer j : players) {
-    					if (j == Minecraft.getMinecraft().thePlayer) {
-    						worldObj.playSound((int)j.posX, (int)j.posY, (int)j.posZ, "ambient.weather.rain", 0.1F, 0.6F, false);
+    					if (j == Minecraft.getMinecraft().player) {
+    						world.playSound((int)j.posX, (int)j.posY, (int)j.posZ, SoundEvents.WEATHER_RAIN, SoundCategory.AMBIENT, 0.1F, 0.6F, false);
     					}
     				}
     			}
@@ -191,34 +206,35 @@ public class EntityCloud extends EntityFlying implements IAnimals {
 	    	}
 	    	
 	    	BlockPos pos = new BlockPos(x, y, z);
-	    	IBlockState state = worldObj.getBlockState(pos);
+	    	IBlockState state = world.getBlockState(pos);
 	    	
 	    	if (state.getBlock() instanceof BlockFire) {
-    			worldObj.setBlockState(pos, Blocks.air.getDefaultState());
+    			world.setBlockState(pos, Blocks.AIR.getDefaultState());
     		}
 	    	
 	    	if (rand.nextInt(20) == 0) {
 	    		BlockPos below = pos.down();
-	    		state = worldObj.getBlockState(below);
+	    		state = world.getBlockState(below);
 		    	if (state.getBlock() != null) {
-		    		if (worldObj.canBlockFreezeWater(below)) {
-		    			worldObj.setBlockState(below, Blocks.ice.getDefaultState());
+		    		if (world.canBlockFreezeWater(below)) {
+		    			world.setBlockState(below, Blocks.ICE.getDefaultState());
 		    		}
 		    		
-		    		if (worldObj.canSnowAt(pos, false)) {
-	    				worldObj.setBlockState(pos, Blocks.snow_layer.getDefaultState());
+		    		if (world.canSnowAt(pos, false)) {
+	    				world.setBlockState(pos, Blocks.SNOW_LAYER.getDefaultState());
 		    		}
 		    		
-		    		int meta = state.getBlock().getMetaFromState(state);
 		    		if (state.getBlock() instanceof BlockFarmland) {
-		    			worldObj.setBlockState(below, state.getBlock().getStateFromMeta(meta + 1));
+		    			int moisture = state.getValue(BlockFarmland.MOISTURE);
+		    			world.setBlockState(below, state.withProperty(BlockFarmland.MOISTURE, moisture + 1));
 		    		} else if (state.getBlock() instanceof BlockCrops) {
-		    			if (meta < 7) {
-		    				worldObj.setBlockState(below, state.getBlock().getStateFromMeta(meta + 1), 2);
+		    			int age = state.getValue(BlockCrops.AGE);
+		    			if (age < 7) {
+		    				world.setBlockState(below, state.withProperty(BlockCrops.AGE, age + 1), 2);
 		    			}
 		    		}
 		    		
-		    		state.getBlock().fillWithRain(worldObj, below);
+		    		state.getBlock().fillWithRain(world, below);
 		    	}
 	    	}
 	    	
@@ -235,6 +251,8 @@ public class EntityCloud extends EntityFlying implements IAnimals {
         		}
         	}
     	}
+    	
+    	Entity riddenByEntity = getControllingPassenger();
     	
         if (riddenByEntity != null && riddenByEntity instanceof EntityLivingBase) {
         	float speedModifier = 1.5f;
@@ -253,7 +271,7 @@ public class EntityCloud extends EntityFlying implements IAnimals {
         rotationYawHead = 0;
         rotationYaw = 0;
         
-        List list = this.worldObj.getEntitiesWithinAABBExcludingEntity(this, boundingbox);
+        List<Entity> list = world.getEntitiesWithinAABBExcludingEntity(this, boundingbox);
         if (list != null) {
         	for (int i = 0; i < list.size(); ++i) {
         		if (list.get(i) instanceof EntityPlayer) {
@@ -266,7 +284,7 @@ public class EntityCloud extends EntityFlying implements IAnimals {
         
 		if (isBurning() && !dead) {
 			for (int i = 0; i < 5; i++) {
-				worldObj.spawnParticle(EnumParticleTypes.CLOUD,
+				world.spawnParticle(EnumParticleTypes.CLOUD,
 						posX + randomIn(rand, boundingbox.minX, boundingbox.maxX),
 						posY + randomIn(rand, boundingbox.minY, boundingbox.maxY),
 						posZ + randomIn(rand, boundingbox.minZ, boundingbox.maxZ), 0, 0.25, 0);
@@ -282,9 +300,9 @@ public class EntityCloud extends EntityFlying implements IAnimals {
         return height - 0.2; // getEntityBoundingBox().maxY - getEntityBoundingBox().minY - 0.25;
     }
     
-    public void moveEntityWithHeading(float p_70612_1_, float p_70612_2_) {
+    public void moveEntityWithHeading(float strafe, float up, float forward, float friction) {
     	if (!getStationary()) {
-    		super.moveEntityWithHeading(p_70612_1_, p_70612_2_);
+    		super.moveRelative(strafe, up, forward, friction);
     	}
     }
         
@@ -294,15 +312,15 @@ public class EntityCloud extends EntityFlying implements IAnimals {
 	    		double difX = player.posX - player.lastTickPosX;
 	    		double difZ = player.posZ - player.lastTickPosZ;
 	    		double difY = player.posY - player.lastTickPosY;
-	            player.distanceWalkedModified = (float)(player.distanceWalkedModified + MathHelper.sqrt_double(difX * difX + difZ * difZ) * 0.6);
-	            player.distanceWalkedOnStepModified = (float)(player.distanceWalkedOnStepModified + MathHelper.sqrt_double(difX * difX + difY * difY + difZ * difZ) * 0.6);
+	            player.distanceWalkedModified = (float)(player.distanceWalkedModified + MathHelper.sqrt(difX * difX + difZ * difZ) * 0.6);
+	            player.distanceWalkedOnStepModified = (float)(player.distanceWalkedOnStepModified + MathHelper.sqrt(difX * difX + difY * difY + difZ * difZ) * 0.6);
 	    		
 	            PlayerExtension prop = PlayerExtension.get(player);
 	    		if ((player.fallDistance > 1f) || player.distanceWalkedOnStepModified > prop.nextStepDistance) {
 	    			prop.nextStepDistance = player.distanceWalkedOnStepModified + 2f;
 	    			player.fallDistance = 0;
-					Block.SoundType soundtype = Blocks.wool.stepSound;
-		            player.playSound(soundtype.getStepSound(), soundtype.getVolume() * 0.15F, soundtype.getFrequency());
+					SoundType soundtype = SoundType.CLOTH;
+		            player.playSound(soundtype.getStepSound(), soundtype.getVolume() * 0.15F, soundtype.getPitch());
 	    		}
 	    	}
     	}
@@ -316,15 +334,15 @@ public class EntityCloud extends EntityFlying implements IAnimals {
     protected void updateAITasks() {
     	if (!getStationary()) {
     		super.updateAITasks();
-	        if (riddenByEntity == null) {
+	        if (!isBeingRidden()) {
 		        double diffY = altitude - posZ;
 		        
 		        if (rand.nextInt(700) == 0 || diffY*diffY < 3f) {
 		            altitude += rand.nextInt(10) - 5;
 		        }
         		
-		        if (altitude > worldObj.provider.getCloudHeight() - 8) {
-		        	altitude = worldObj.provider.getCloudHeight() - 18;
+		        if (altitude > world.provider.getCloudHeight() - 8) {
+		        	altitude = world.provider.getCloudHeight() - 18;
 		        } else if (altitude < 70) {
 		        	altitude = posY + 10;
 		        }
@@ -336,32 +354,30 @@ public class EntityCloud extends EntityFlying implements IAnimals {
     	}
     }
     
-    public boolean interact(EntityPlayer player) {
-        if (super.interact(player)) {
-            return true;
-        } else if ((riddenByEntity == null || riddenByEntity == player)) {
+    public EnumActionResult applyPlayerInteraction(EntityPlayer player, Vec3d vec, EnumHand hand) {
+    	if ((isBeingRidden() || isRidingOrBeingRiddenBy(player)) && hand == EnumHand.MAIN_HAND) {
         	if (PlayerSpeciesRegister.getPlayerSpecies(player).canInteractWithClouds()) {
-        		ItemStack stack = player.getHeldItem();
+        		ItemStack stack = player.getHeldItem(hand);
         		if (stack != null) {
-        			if (!worldObj.isRemote && stack.getItem() == Items.spawn_egg && stack.getItemDamage() == Settings.getEntityId("cloud")) {
-        				if (spawnCreature(player, stack)) return true;
+        			if (!world.isRemote && stack.getItem() == Items.SPAWN_EGG && stack.getItemDamage() == Settings.getEntityId("cloud")) {
+        				if (spawnCreature(player, stack)) return EnumActionResult.SUCCESS;
         			} else if (getStationary() && ItemBlock.class.isAssignableFrom(stack.getItem().getClass())) {
-        				placeBlock(player, stack);
-        				return true;
+        				placeBlock(player, stack, hand);
+        				return EnumActionResult.SUCCESS;
         			}
         		}
-        		if (!worldObj.isRemote && !getStationary()) {
-        			player.mountEntity(this);
-        			if (riddenByEntity != null) {
+        		if (!world.isRemote && !getStationary()) {
+        			player.startRiding(this);
+        			if (isBeingRidden()) {
         				onMount(player);
         			} else {
         				onUnmount(player);
         			}
-        			return true;
+        			return EnumActionResult.SUCCESS;
         		}
         	}
         }
-        return false;
+        return EnumActionResult.FAIL;
     }
     
     protected void onMount(EntityPlayer player) {
@@ -374,59 +390,59 @@ public class EntityCloud extends EntityFlying implements IAnimals {
     	getCloudSize();
     }
         
-    public void handleHealthUpdate(byte type) {
+    public void handleStatusUpdate(byte type) {
     	if (type == 2) {
-    		if (worldObj.isRemote && !isBurning()) {
+    		if (world.isRemote && !isBurning()) {
     			for (int i = 0; i < 50 * getCloudSize(); i++) {
     				ApiParticles.addBlockHitEffectsToEntity(this, Unicopia.UBlocks.cloud.getDefaultState());
     			}
     		}
     	}
-    	super.handleHealthUpdate(type);
+    	super.handleStatusUpdate(type);
     }
     
     public boolean attackEntityFrom(DamageSource source, float amount) {
-    	Entity attacker = source.getSourceOfDamage();
+    	Entity attacker = source.getImmediateSource();
     	if (attacker != null) {
     		if (EntityPlayer.class.isAssignableFrom(attacker.getClass())) {
     			return onAttackByPlayer(source, amount, (EntityPlayer)attacker);
     		}
     		return false;
     	}
-		return source == DamageSource.inWall || super.attackEntityFrom(source, amount);
+		return source == DamageSource.IN_WALL || super.attackEntityFrom(source, amount);
     }
     
     private boolean spawnCreature(EntityPlayer player, ItemStack stack) {
-    	Entity entity = ItemMonsterPlacer.spawnCreature(worldObj, stack.getItemDamage(), posX, posY + height, posZ);
+    	Entity entity = ItemMonsterPlacer.spawnCreature(world, ItemMonsterPlacer.getNamedIdFrom(stack), posX, posY + height, posZ);
         if (entity != null) {
             if (entity instanceof EntityLivingBase && stack.hasDisplayName()) {
                 ((EntityLiving)entity).setCustomNameTag(stack.getDisplayName());
             }
             
-            if (!player.capabilities.isCreativeMode) stack.stackSize--;
+            if (!player.capabilities.isCreativeMode) stack.shrink(1);
             return true;
         }
         return false;
     }
     
-    private void placeBlock(EntityPlayer player, ItemStack stack) {
-    	if (worldObj.isRemote) {
+    private void placeBlock(EntityPlayer player, ItemStack stack, EnumHand hand) {
+    	if (world.isRemote) {
 	    	double distance = ClientSide.getReach();
-			Vec3 pos = VecHelper.geteEyePosition(player, 1);
-			Vec3 look = player.getLook(1);
-	        Vec3 ray = pos.addVector(look.xCoord * distance, look.yCoord * distance, look.zCoord * distance);
+			Vec3d pos = VecHelper.geteEyePosition(player, 1);
+			Vec3d look = player.getLook(1);
+	        Vec3d ray = pos.addVector(look.x * distance, look.y * distance, look.z * distance);
 	        double size = getCollisionBorderSize() * 2;
-			MovingObjectPosition trace = getEntityBoundingBox().expand(size, size, size).calculateIntercept(pos, ray);
+			RayTraceResult trace = getEntityBoundingBox().expand(size, size, size).calculateIntercept(pos, ray);
 			if (trace != null) {
-				double x = trace.hitVec.xCoord;
-				double y = trace.hitVec.yCoord;
-				double z = trace.hitVec.zCoord;
+				double x = trace.hitVec.x;
+				double y = trace.hitVec.y;
+				double z = trace.hitVec.z;
 				
-				double fX = MathHelper.floor_double(x);
-				double fY = MathHelper.floor_double(y);
-				double fZ = MathHelper.floor_double(z);
+				double fX = MathHelper.floor(x);
+				double fY = MathHelper.floor(y);
+				double fZ = MathHelper.floor(z);
 				
-				int stackSize = stack.stackSize;
+				int stackSize = stack.getCount();
 				
 				if (trace.sideHit == EnumFacing.UP) {
 					fY--;
@@ -437,13 +453,12 @@ public class EntityCloud extends EntityFlying implements IAnimals {
 					y+=2;
 				}
 				
-				ClientSide.sendBlockPlacement(player, fX, fY, fZ, x, y, z, trace.sideHit);
-				if (stack.onItemUse(player, worldObj, new BlockPos(fX, fY, fZ), trace.sideHit, (float)(x - fX), (float)(y - fY), (float)(z - fZ))) {
-					player.swingItem();
+				if (stack.onItemUse(player, world, new BlockPos(fX, fY, fZ), hand, trace.sideHit, (float)(x - fX), (float)(y - fY), (float)(z - fZ)) == EnumActionResult.PASS) {
+					player.swingArm(hand);
 				}
 				
 				if (player.capabilities.isCreativeMode) {
-					stack.stackSize = stackSize;
+					stack.setCount(stackSize);
 				}
 			}
     	}
@@ -453,7 +468,7 @@ public class EntityCloud extends EntityFlying implements IAnimals {
     	boolean canFly = PlayerSpeciesRegister.getPlayerSpecies(player).canInteractWithClouds();
     	boolean stat = getStationary();
     	if (stat || canFly) {
-			ItemStack stack = (ItemStack)player.inventory.mainInventory[player.inventory.currentItem];
+			ItemStack stack = player.getHeldItemMainhand();
 			if (stack != null && ItemSword.class.isAssignableFrom(stack.getItem().getClass())) {
 				return super.attackEntityFrom(source, amount);
 			} else if (stack != null && ItemSpade.class.isAssignableFrom(stack.getItem().getClass())) {
@@ -470,8 +485,8 @@ public class EntityCloud extends EntityFlying implements IAnimals {
     }
     
     public void onDeath(DamageSource s) {
-    	if (s == DamageSource.generic || (s.getEntity() != null && EntityPlayer.class.isAssignableFrom(s.getEntity().getClass()))) {
-    		if (worldObj.isRemote) {
+    	if (s == DamageSource.GENERIC || (s.getTrueSource() != null && s.getTrueSource() instanceof EntityPlayer)) {
+    		if (world.isRemote) {
     			if (!isBurning()) ApiParticles.addBlockDestroyEffectsToEntity(this, Unicopia.UBlocks.cloud.getDefaultState());
     			setDead();
         	}
@@ -482,7 +497,7 @@ public class EntityCloud extends EntityFlying implements IAnimals {
     protected void dropFewItems(boolean hitByPlayer, int looting) {
     	if (hitByPlayer) {
 	    	Item item = getDropItem();
-	    	int amount = 2 + worldObj.rand.nextInt(3 + looting);
+	    	int amount = 2 + world.rand.nextInt(3 + looting);
 	    	for (int i = 0; i < amount; i++) {
 	    		dropItem(item, 1);
 	    	}
@@ -509,11 +524,11 @@ public class EntityCloud extends EntityFlying implements IAnimals {
     
     private boolean floatPlayer(EntityPlayer player) {
     	int floatStrength = getFloatStrength(player);
-    	if (player != riddenByEntity && floatStrength > 0) {
-    		double boundModifier = player.fallDistance > 80 ? 80 : MathHelper.floor_double(player.fallDistance * 10)/10;
+    	if (!isRidingOrBeingRiddenBy(player) && floatStrength > 0) {
+    		double boundModifier = player.fallDistance > 80 ? 80 : MathHelper.floor(player.fallDistance * 10)/10;
     		player.onGround = true;
 			player.motionY += (((floatStrength > 2 ? 1 : floatStrength/2) * 0.699999998079071D) - player.motionY + boundModifier*0.7) * 0.10000000149011612D;
-			if (!getStationary() && player.motionY > 0.4 && worldObj.rand.nextInt(900) == 0) {
+			if (!getStationary() && player.motionY > 0.4 && world.rand.nextInt(900) == 0) {
 				Thunder((int)posY);
 			}
 			return true;
@@ -530,12 +545,11 @@ public class EntityCloud extends EntityFlying implements IAnimals {
 	}
 	
 	public static int getFeatherEnchantStrength(EntityPlayer player) {
-		for (int i = 0; i < 5; i++) {
-			ItemStack stack = player.getEquipmentInSlot(i);
+		for (ItemStack stack : player.getArmorInventoryList()) {
 			if (stack != null) {
-				Map enchantments = EnchantmentHelper.getEnchantments(stack);
-				if (enchantments.containsKey(Enchantment.featherFalling.effectId)) {
-					return (Integer)enchantments.get(Enchantment.featherFalling.effectId);
+				Map<Enchantment, Integer> enchantments = EnchantmentHelper.getEnchantments(stack);
+				if (enchantments.containsKey(Enchantments.FEATHER_FALLING)) {
+					return (Integer)enchantments.get(Enchantments.FEATHER_FALLING);
 				}
 			}
 		}
@@ -543,11 +557,11 @@ public class EntityCloud extends EntityFlying implements IAnimals {
 	}
 	
 	private boolean canRainHere() {
-		return worldObj.getBiomeGenForCoords(new BlockPos(posX, posY, posZ)).canSpawnLightningBolt();
+		return world.getBiome(new BlockPos(posX, posY, posZ)).canRain();
 	}
 	
 	private boolean canSnowHere(BlockPos pos) {
-		return worldObj.getBiomeGenForCoords(pos).getFloatTemperature(pos) <= 0.15f;
+		return world.getBiome(pos).getFloatTemperature(pos) <= 0.15f;
 	}
 	
     public void Thunder() {
@@ -555,13 +569,13 @@ public class EntityCloud extends EntityFlying implements IAnimals {
     }
     
     public void Thunder(int altitude) {
-    	worldObj.addWeatherEffect(new EntityLightningBolt(worldObj, posX, altitude, posZ));
+    	world.addWeatherEffect(new EntityLightningBolt(world, posX, altitude, posZ, false));
     }
     
     private int getBlockUnder(BlockPos pos) {
-    	int y = worldObj.getTopSolidOrLiquidBlock(pos).getY();
+    	int y = world.getTopSolidOrLiquidBlock(pos).getY();
     	if (y >= posY) {
-    		while (pos.getY() > 0 && worldObj.getBlockState(pos).getBlock() == Blocks.air) {
+    		while (pos.getY() > 0 && world.getBlockState(pos).getBlock() == Blocks.AIR) {
     			pos = pos.down();
     		}
     		pos.up();
@@ -570,12 +584,12 @@ public class EntityCloud extends EntityFlying implements IAnimals {
     }
     
     public int getRainTimer() {
-    	return dataWatcher.getWatchableObjectInt(12);
+    	return dataManager.get(RAINTIMER);
     }
     
     public int setRainTimer(int val) {
     	if (val < 0) val = 0;
-    	dataWatcher.updateObject(12, val);
+    	dataManager.set(RAINTIMER, val);
     	return val;
     }
     
@@ -596,31 +610,31 @@ public class EntityCloud extends EntityFlying implements IAnimals {
     }
     
     public boolean getIsThundering() {
-    	return dataWatcher.getWatchableObjectByte(13) == 1;
+    	return dataManager.get(THUNDERING);
     }
     
     public void setIsThundering(boolean val) {
-    	dataWatcher.updateObject(13, Byte.valueOf((byte)(val ? 1 : 0)));
+    	dataManager.set(THUNDERING, val);
     }
         
     private int getCloudSizeInternal() {
-    	return dataWatcher.getWatchableObjectByte(14);
+    	return dataManager.get(SCALE);
     }
     
     public boolean getStationary() {
-    	return dataWatcher.getWatchableObjectByte(16) == 1;
+    	return dataManager.get(STATIONARY);
     }
     
-    public void setStationary(boolean v) {
-    	dataWatcher.updateObject(16, Byte.valueOf((byte)(v ? 1 : 0)));
+    public void setStationary(boolean val) {
+    	dataManager.set(STATIONARY, val);
     }
     
     public boolean getOpaque() {
-    	return dataWatcher.getWatchableObjectByte(17) == 1;
+    	return dataManager.get(OPAQUE);
     }
     
-    public void setOpaque(boolean v) {
-    	dataWatcher.updateObject(17, Byte.valueOf((byte)(v ? 1 : 0)));
+    public void setOpaque(boolean val) {
+    	dataManager.set(OPAQUE, val);
     }
     
     public int getCloudSize() {
@@ -630,7 +644,7 @@ public class EntityCloud extends EntityFlying implements IAnimals {
     }
     
     private void updateSize(int scale) {
-    	if (width != (baseWidth * scale) || (riddenByEntity == null && height != (baseHeight * scale))) {
+    	if (width != (baseWidth * scale) || (isBeingRidden() && height != (baseHeight * scale))) {
 			setSize((float)(baseWidth * scale), (float)(baseHeight * scale));
 			setPosition(posX, posY, posZ);
 		}
@@ -641,6 +655,6 @@ public class EntityCloud extends EntityFlying implements IAnimals {
     		val = 1;
     	}
     	updateSize(val);
-    	dataWatcher.updateObject(14, Byte.valueOf((byte)(val)));
+    	dataManager.set(SCALE, val);
     }
 }

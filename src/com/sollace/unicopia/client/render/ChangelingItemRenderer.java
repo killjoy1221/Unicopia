@@ -5,7 +5,7 @@ import com.blazeloader.api.tick.ApiTick;
 import net.minecraft.client.entity.AbstractClientPlayer;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.MathHelper;
+import net.minecraft.util.math.MathHelper;
 
 public class ChangelingItemRenderer {
 	
@@ -36,7 +36,7 @@ public class ChangelingItemRenderer {
         GlStateManager.rotate(-10F, 0, 0, 1);
         GlStateManager.scale(1, 1, 1);
         GlStateManager.translate(0.2f, -1.7f, -0.4f);
-        renderer._renderLeftArm(clientPlayer);
+        renderer.renderLeftArm(clientPlayer);
     }
 	
 	public void updateEquippedItem(AbstractClientPlayer clientPlayer) {
@@ -45,7 +45,7 @@ public class ChangelingItemRenderer {
         boolean var3 = false;
 
         if (this.itemToRender != null && var2 != null) {
-            if (!this.itemToRender.getIsItemStackEqual(var2)) {
+            if (!this.itemToRender.isItemEqual(var2)) {
                 var3 = true;
             }
         } else if (this.itemToRender == null && var2 == null) {
@@ -56,7 +56,7 @@ public class ChangelingItemRenderer {
 
         float var4 = 0.4F;
         float var5 = var3 ? 0.0F : 1.0F;
-        float var6 = MathHelper.clamp_float(var5 - equippedProgress, -var4, var4);
+        float var6 = MathHelper.clamp(var5 - equippedProgress, -var4, var4);
         equippedProgress += var6;
 
         if (equippedProgress < 0.1F) itemToRender = var2;

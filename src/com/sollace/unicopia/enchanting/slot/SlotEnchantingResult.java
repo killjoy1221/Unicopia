@@ -9,6 +9,7 @@ import com.sollace.unicopia.enchanting.PagesList;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.NonNullList;
 
 public class SlotEnchantingResult extends SlotEnchanting {
 	
@@ -32,7 +33,7 @@ public class SlotEnchantingResult extends SlotEnchanting {
 	
 	public ItemStack decrStackSize(int amount) {
         if (getHasStack()) {
-            amountCrafted += Math.min(amount, getStack().stackSize);
+            amountCrafted += Math.min(amount, getStack().getCount());
         }
 
         return super.decrStackSize(amount);
@@ -42,15 +43,15 @@ public class SlotEnchantingResult extends SlotEnchanting {
         this.onCrafting(stack);
         ItemStack current = craftMatrix.getCraftResultMatrix().getStackInSlot(0);
         craftMatrix.getCraftResultMatrix().setInventorySlotContents(0, stack);
-        ItemStack[] remaining = Unicopia.getCraftingManager().getUnmatchedInventory(craftMatrix, player.worldObj);
+        NonNullList<ItemStack> remaining = Unicopia.getCraftingManager().getUnmatchedInventory(craftMatrix, player.world);
         craftMatrix.getCraftResultMatrix().setInventorySlotContents(0, current);
-        for (int i = 0; i < remaining.length; ++i) {
+        for (int i = 0; i < remaining.size(); ++i) {
             current = craftMatrix.getStackInSlot(i);
-            ItemStack remainder = remaining[i];
+            ItemStack remainder = remaining.get(i);
             
             if (current != null) {
             	if (stack.getMetadata() > 0) {
-            		craftMatrix.decrStackSize(i, stack.stackSize);
+            		craftMatrix.decrStackSize(i, stack.getCount());
             	}
             }
             
@@ -61,7 +62,7 @@ public class SlotEnchantingResult extends SlotEnchanting {
             } else {
             	ItemStack inSlot = craftMatrix.getStackInSlot(i);
             	if (inSlot != null) {
-            		if (inSlot.stackSize <= amountCrafted) {
+            		if (inSlot.getCount() <= amountCrafted) {
             			craftMatrix.setInventorySlotContents(i, null);
             		}
             	} else {

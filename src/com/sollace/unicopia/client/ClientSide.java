@@ -2,10 +2,7 @@ package com.sollace.unicopia.client;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.network.play.client.C08PacketPlayerBlockPlacement;
-import net.minecraft.util.BlockPos;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.MovingObjectPosition;
+import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.ResourceLocation;
 
 import com.blazeloader.api.client.ApiClient;
@@ -41,15 +38,11 @@ public class ClientSide {
     }
     
     public static EntityPlayer thePlayer() {
-    	return Minecraft.getMinecraft().thePlayer;
+    	return Minecraft.getMinecraft().player;
     }
     
-    public static MovingObjectPosition getMousOver() {
+    public static RayTraceResult getMousOver() {
     	return Minecraft.getMinecraft().objectMouseOver;
-    }
-    
-    public static void sendBlockPlacement(EntityPlayer player, double fX, double fY, double fZ, double x, double y, double z, EnumFacing side) {
-    	Minecraft.getMinecraft().playerController.func_178892_a(player.worldObj, null).sendQueue.addToSendQueue(new C08PacketPlayerBlockPlacement(new BlockPos(x, y, z), side.getIndex(), player.inventory.getCurrentItem(), (float)(x - fX), (float)(y - fY), (float)(z - fZ)));
     }
     
     public static float getReach() {

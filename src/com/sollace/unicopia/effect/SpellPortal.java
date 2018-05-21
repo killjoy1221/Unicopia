@@ -13,11 +13,13 @@ import com.sollace.unicopia.entity.IMagicals;
 
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.init.SoundEvents;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.util.AxisAlignedBB;
-import net.minecraft.util.BlockPos;
+import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.EnumFacing;
+import net.minecraft.util.SoundCategory;
 import net.minecraft.world.World;
 
 public class SpellPortal implements IMagicEffect, IUseAction {
@@ -133,9 +135,9 @@ public class SpellPortal implements IMagicEffect, IUseAction {
 				double destY = destinationPos.getY() + (i.posY - y) + 0.5f;
 				double destZ = destinationPos.getZ() + (i.posZ - z) + offset.getFrontOffsetZ();
 				i.timeUntilPortal = i.getPortalCooldown();
-				i.worldObj.playSoundEffect(i.posX, i.posY, i.posZ, "random.pop", 1.0F, 1.0F);
+				i.getEntityWorld().playSound(i.posX, i.posY, i.posZ, SoundEvents.ENTITY_ITEM_PICKUP, SoundCategory.PLAYERS, 1, 1, true);
 				i.setPositionAndUpdate(destX, destY, destZ);
-				i.worldObj.playSoundEffect(i.posX, i.posY, i.posZ, "random.pop", 1.0F, 1.0F);
+				i.getEntityWorld().playSound(i.posX, i.posY, i.posZ, SoundEvents.ENTITY_ITEM_PICKUP, SoundCategory.PLAYERS, 1, 1, true);
 			}
 		}
 		return result;
@@ -143,7 +145,7 @@ public class SpellPortal implements IMagicEffect, IUseAction {
 	
 	public SpellPortal getDestinationPortal(World w) {
 		if (sibling == null) {
-			AxisAlignedBB box = AxisAlignedBB.fromBounds(destinationPos.getX(), destinationPos.getY(), destinationPos.getZ(), destinationPos.getX() + 1, destinationPos.getY() + 1, destinationPos.getZ() + 1);
+			AxisAlignedBB box = new AxisAlignedBB(destinationPos.getX(), destinationPos.getY(), destinationPos.getZ(), destinationPos.getX() + 1, destinationPos.getY() + 1, destinationPos.getZ() + 1);
 			List<EntitySpell> entities = w.getEntitiesWithinAABB(EntitySpell.class, box.expand(0.5, 0.5, 0.5));
 			for (EntitySpell i : entities) {
 				if (i.getEffect() instanceof SpellPortal) {

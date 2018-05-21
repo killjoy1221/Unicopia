@@ -19,7 +19,7 @@ public class UKeyHandler {
 		
 	private static ArrayList<KeyBinding> pressed = new ArrayList<KeyBinding>();
 	
-	public static void RegisterKeyBinding(Power p) {
+	public static void RegisterKeyBinding(Power<?> p) {
 		KeyBinding b = new KeyBinding(p.getKeyName(), p.getDefaultKeyIndex(), p.getKeyCategory());
 		LiteLoader.getInput().registerKeyBinding(b);
 		bindings.add(b);
@@ -36,7 +36,7 @@ public class UKeyHandler {
 						removed.add(i);
 						System.out.println("Error: Keybinding(" + i.getKeyDescription() + ") does not have a registered pony power. Keybinding will be removed from event.");
 					} else {
-						Power p = Power.getCapablePowerFromKey(i.getKeyCodeDefault(), Settings.getSpecies());
+						Power<?> p = Power.getCapablePowerFromKey(i.getKeyCodeDefault(), Settings.getSpecies());
 						if (p != null) {
 							if (p.canUse(Settings.getSpecies())) {
 								prop.tryUseAbility(p);

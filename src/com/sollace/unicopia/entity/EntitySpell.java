@@ -9,16 +9,23 @@ import com.sollace.unicopia.Unicopia.UItems;
 import com.sollace.unicopia.effect.IMagicEffect;
 
 import net.minecraft.block.Block;
-import net.minecraft.block.Block.SoundType;
+import net.minecraft.block.SoundType;
 import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.entity.MoverType;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.init.SoundEvents;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.util.BlockPos;
+import net.minecraft.network.datasync.DataParameter;
+import net.minecraft.network.datasync.DataSerializers;
+import net.minecraft.network.datasync.EntityDataManager;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.DamageSource;
-import net.minecraft.util.MathHelper;
-import net.minecraft.util.Vec3;
+import net.minecraft.util.EnumHand;
+import net.minecraft.util.SoundCategory;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 
 public class EntitySpell extends EntityLiving implements IMagicals, IMousePickHandler, ITameable {
@@ -29,11 +36,15 @@ public class EntitySpell extends EntityLiving implements IMagicals, IMousePickHa
 	
 	public float hoverStart;
 	
+	private static final DataParameter<Integer> LEVEL = EntityDataManager.createKey(EntitySpell.class, DataSerializers.VARINT);
+	private static final DataParameter<Integer> EFFECT_ID = EntityDataManager.createKey(EntitySpell.class, DataSerializers.VARINT);
+	private static final DataParameter<String> OWNER = EntityDataManager.createKey(EntitySpell.class, DataSerializers.STRING);
+	
 	public EntitySpell(World w) {
 		super(w);
 		setSize(0.6f, 0.25f);
 		hoverStart = (float)(Math.random() * Math.PI * 2.0D);
-		renderDistanceWeight += 1;
+		setRenderDistanceWeight(getRenderDistanceWeight() + 1);
 		preventEntitySpawning = false;
 		enablePersistence();
 	}
@@ -44,21 +55,21 @@ public class EntitySpell extends EntityLiving implements IMagicals, IMousePickHa
 	
 	public void setEffect(IMagicEffect effect) {
 		this.effect = effect;
-		dataWatcher.updateObject(11, SpellList.getId(effect));
+		dataManager.set(EFFECT_ID, SpellList.getId(effect));
 	}
 	
 	public IMagicEffect getEffect() {
 		if (effect == null) {
-			effect = SpellList.forId(dataWatcher.getWatchableObjectInt(11));
+			effect = SpellList.forId(dataManager.get(EFFECT_ID));
 		}
 		return effect;
 	}
 	
 	protected void entityInit() {
 		super.entityInit();
-		dataWatcher.addObject(10, 0);
-		dataWatcher.addObject(11, 0);
-		dataWatcher.addObject(12, "");
+		dataManager.register(LEVEL, 0);
+		dataManager.register(EFFECT_ID, 0);
+		dataManager.register(OWNER, "");
 	}
 	
 	
@@ -74,20 +85,20 @@ public class EntitySpell extends EntityLiving implements IMagicals, IMousePickHa
     
 	public void setOwner(EntityLivingBase owner) {
 		this.owner = owner;
-		setOwner(owner.getCommandSenderName());
+		setOwner(owner.getName());
 	}
 	
 	protected void setOwner(String ownerName) {
 		if (ownerName != null && ownerName.length() != 0) {
-			dataWatcher.updateObject(12, ownerName);
+			dataManager.set(OWNER, ownerName);
 		}
 	}
 	
 	protected String getOwnerName() {
-		String ownerName = dataWatcher.getWatchableObjectString(12);
+		String ownerName = dataManager.get(OWNER);
 		if (ownerName == null || ownerName.length() == 0) {
 			if (owner instanceof EntityPlayer) {
-				return owner.getCommandSenderName();
+				return owner.getName();
 			}
 			return "";
         }
@@ -96,9 +107,9 @@ public class EntitySpell extends EntityLiving implements IMagicals, IMousePickHa
 	
 	public EntityLivingBase getOwner() {
         if (owner == null) {
-        	String ownerName = dataWatcher.getWatchableObjectString(12);
+        	String ownerName = dataManager.get(OWNER);
         	if (ownerName != null && ownerName.length() > 0) {
-        		owner = worldObj.getPlayerEntityByName(ownerName);
+        		owner = world.getPlayerEntityByName(ownerName);
         	}
         }
         return owner;
@@ -106,12 +117,12 @@ public class EntitySpell extends EntityLiving implements IMagicals, IMousePickHa
 	
 	public void displayTick() {
 		if (getEffect() != null) {
-			effect.renderAt(this, worldObj, posX, posY, posZ, getLevel());
+			effect.renderAt(this, world, posX, posY, posZ, getLevel());
 		}
 	}
 	
 	public void onUpdate() {
-		if (worldObj.isRemote) {
+		if (world.isRemote) {
 			displayTick();
 		}
 		
@@ -122,7 +133,7 @@ public class EntitySpell extends EntityLiving implements IMagicals, IMousePickHa
 				setDead();
 				onDeath();
 			} else {
-				effect.updateAt(this, worldObj, posX, posY, posZ, getLevel());
+				effect.updateAt(this, world, posX, posY, posZ, getLevel());
 			}
 			
 			if (effect.allowAI()) {
@@ -146,21 +157,19 @@ public class EntitySpell extends EntityLiving implements IMagicals, IMousePickHa
         float var10;
         if (this.isServerWorld()) {
             float var5;
-            float var6;
-
+            
             if (this.isInWater() || this.isInLava()) {
             	float var3 = 0.91F;
             	float var4 = 0.16277136F / (var3 * var3 * var3);
             	
                 var8 = this.posY;
                 
-                
                 var5 = this.getAIMoveSpeed() * var4;
 
-                this.moveFlying(strafe, forward, var5);
+                this.travel(strafe, forward, var5);
                 var3 = 0.91F;
                 
-                this.moveEntity(this.motionX, this.motionY, this.motionZ);
+                move(MoverType.SELF, this.motionX, this.motionY, this.motionZ);
                 this.motionX *= (double)var3;
                 this.motionY *= 0.800000011920929D;
                 this.motionZ *= (double)var3;
@@ -173,7 +182,7 @@ public class EntitySpell extends EntityLiving implements IMagicals, IMousePickHa
                 float var3 = 0.91F;
 
                 if (onGround) {
-                    var3 = this.worldObj.getBlockState(new BlockPos(MathHelper.floor_double(this.posX), MathHelper.floor_double(this.getEntityBoundingBox().minY) - 1, MathHelper.floor_double(this.posZ))).getBlock().slipperiness * 0.91F;
+                    var3 = this.world.getBlockState(new BlockPos(MathHelper.floor(this.posX), MathHelper.floor(getEntityBoundingBox().minY) - 1, MathHelper.floor(this.posZ))).getBlock().slipperiness * 0.91F;
                 }
 
                 float var4 = 0.16277136F / (var3 * var3 * var3);
@@ -183,19 +192,19 @@ public class EntitySpell extends EntityLiving implements IMagicals, IMousePickHa
                 } else {
                     var5 = this.jumpMovementFactor;
                 }
-
-                this.moveFlying(strafe, forward, var5);
+                
+                travel(strafe, forward, var5);
                 var3 = 0.91F;
 
                 if (this.onGround) {
-                    var3 = this.worldObj.getBlockState(new BlockPos(MathHelper.floor_double(this.posX), MathHelper.floor_double(this.getEntityBoundingBox().minY) - 1, MathHelper.floor_double(this.posZ))).getBlock().slipperiness * 0.91F;
+                    var3 = this.world.getBlockState(new BlockPos(MathHelper.floor(this.posX), MathHelper.floor(getEntityBoundingBox().minY) - 1, MathHelper.floor(this.posZ))).getBlock().slipperiness * 0.91F;
                 }
+                
+                move(MoverType.SELF, motionX, motionY, motionZ);
 
-                this.moveEntity(this.motionX, this.motionY, this.motionZ);
+                if (isCollidedHorizontally && isOnLadder()) motionY = 0.2;
 
-                if (this.isCollidedHorizontally && this.isOnLadder()) this.motionY = 0.2D;
-
-                if (this.worldObj.isRemote && (!this.worldObj.isBlockLoaded(new BlockPos((int)this.posX, 0, (int)this.posZ)) || !this.worldObj.getChunkFromBlockCoords(new BlockPos((int)this.posX, 0, (int)this.posZ)).isLoaded())) {
+                if (this.world.isRemote && (!this.world.isBlockLoaded(new BlockPos((int)posX, 0, (int)posZ)) || !world.getChunkFromBlockCoords(new BlockPos((int)this.posX, 0, (int)this.posZ)).isLoaded())) {
                     if (this.posY > 0.0D) {
                         this.motionY = -0.1D;
                     } else {
@@ -214,7 +223,7 @@ public class EntitySpell extends EntityLiving implements IMagicals, IMousePickHa
         this.prevLimbSwingAmount = this.limbSwingAmount;
         var8 = this.posX - this.prevPosX;
         double var9 = this.posZ - this.prevPosZ;
-        var10 = MathHelper.sqrt_double(var8 * var8 + var9 * var9) * 4.0F;
+        var10 = MathHelper.sqrt(var8 * var8 + var9 * var9) * 4.0F;
 
         if (var10 > 1.0F) var10 = 1.0F;
 
@@ -223,7 +232,7 @@ public class EntitySpell extends EntityLiving implements IMagicals, IMousePickHa
     }
     
 	public boolean attackEntityFrom(DamageSource source, float amount) {
-		if (!worldObj.isRemote) {
+		if (!world.isRemote) {
 			setDead();
 			onDeath();
 		}
@@ -231,9 +240,9 @@ public class EntitySpell extends EntityLiving implements IMagicals, IMousePickHa
 	}
 	
 	protected void onDeath() {
-		SoundType sound = Block.soundTypeStone;
-		worldObj.playSoundEffect(posX, posY, posZ, sound.getBreakSound(), sound.getVolume(), sound.getFrequency());
-		if (worldObj.getGameRules().getGameRuleBooleanValue("doTileDrops")) {
+		SoundType sound = SoundType.STONE;
+		world.playSound(posX, posY, posZ, sound.getBreakSound(), SoundCategory.NEUTRAL, sound.getVolume(), sound.getPitch(), true);
+		if (world.getGameRules().getBoolean("doTileDrops")) {
 			int level = getLevel();
 			entityDropItem(new ItemStack(UItems.spell, level + 1, SpellList.getId(effect)), 0);
 		}
@@ -247,38 +256,38 @@ public class EntitySpell extends EntityLiving implements IMagicals, IMousePickHa
 	}
 	
 	public int getLevel() {
-		return dataWatcher.getWatchableObjectInt(10);
+		return dataManager.get(LEVEL);
 	}
 	
 	public void setLevel(int radius) {
-		dataWatcher.updateObject(10, radius);
+		dataManager.set(LEVEL, radius);
 	}
 	
 	public boolean tryLevelUp(ItemStack stack) {
 		if (stack.getMetadata() > 0 && stack.getMetadata() == SpellList.getId(getEffect())) {
 			increaseLevel();
-			if (!worldObj.isRemote) {
+			if (!world.isRemote) {
 				if ((rand.nextFloat() * getLevel()) > 10 || overLevelCap()) {
-					worldObj.createExplosion(this, posX, posY, posZ, getLevel()/2, true);
+					world.createExplosion(this, posX, posY, posZ, getLevel()/2, true);
 					setDead();
 					return false;
 				}
             }
-			playSound("mob.zombie.remedy", 0.1f, 1);
+			playSound(SoundEvents.ENTITY_ZOMBIE_VILLAGER_CURE, 0.1f, 1);
 			return true;
 		}
 		return false;
 	}
 	
-	public boolean interactAt(EntityPlayer player, Vec3 p_174825_2_) {
+	public boolean interactAt(EntityPlayer player, Vec3d p_174825_2_) {
 		if (PlayerSpeciesRegister.getPlayerSpecies(player).canCast()) {
-			ItemStack currentItem = player.getCurrentEquippedItem();
+			ItemStack currentItem = player.getHeldItem(EnumHand.MAIN_HAND);
 			if (currentItem != null && currentItem.getItem() instanceof ItemSpell) {
 				tryLevelUp(currentItem);
 				if (!player.capabilities.isCreativeMode) {
-					currentItem.stackSize--;
-					if (currentItem.stackSize < 1) {
-						player.destroyCurrentEquippedItem();
+					currentItem.shrink(1);
+					if (currentItem.isEmpty()) {
+						player.renderBrokenItemStack(currentItem);
 					}
 				}
 				return true;

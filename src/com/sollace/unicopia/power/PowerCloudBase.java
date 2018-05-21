@@ -51,11 +51,11 @@ public abstract class PowerCloudBase extends Power<PowerCloudBase.PegasusData> {
 	}
 
 	public void apply(EntityPlayer player, PegasusData data) {
-		if (player.ridingEntity != null && player.ridingEntity instanceof EntityCloud) {
+		if (player.isRiding() && player.getRidingEntity() instanceof EntityCloud) {
 			switch (data.type) {
-				case 1: ((EntityCloud)player.ridingEntity).setIsRaining(!((EntityCloud)player.ridingEntity).getIsRaining());
+				case 1: ((EntityCloud)player.getRidingEntity()).setIsRaining(!((EntityCloud)player.getRidingEntity()).getIsRaining());
 					break;
-				case 2: ((EntityCloud)player.ridingEntity).Thunder();
+				case 2: ((EntityCloud)player.getRidingEntity()).Thunder();
 					break;
 			}
 		} else {

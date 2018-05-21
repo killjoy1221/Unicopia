@@ -17,7 +17,7 @@ import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.BlockPos;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.world.World;
@@ -30,37 +30,37 @@ public class SpellInferno extends SpellFire {
 		affected.add(new IStateMapping() {
 			public boolean canConvert(IBlockState state) {
 				Block id = state.getBlock();
-				return id == Blocks.grass || id == Blocks.dirt || id == Blocks.stone;
+				return id == Blocks.GRASS || id == Blocks.DIRT || id == Blocks.STONE;
 			}
 			public IBlockState getConverted(IBlockState state) {
-				return Blocks.netherrack.getDefaultState();
+				return Blocks.NETHERRACK.getDefaultState();
 			}
 		});
-		affected.add(Blocks.sand, Blocks.soul_sand);
+		affected.add(Blocks.SAND, Blocks.SOUL_SAND);
 		affected.add(new IStateMapping() {
 			public boolean canConvert(IBlockState state) {
-				return state.getBlock().getMaterial() == Material.water;
+				return state.getMaterial() == Material.WATER;
 			}
 			public IBlockState getConverted(IBlockState state) {
-				return Blocks.obsidian.getDefaultState();
+				return Blocks.OBSIDIAN.getDefaultState();
 			}
 		});
-		affected.add(Blocks.gravel, Blocks.soul_sand);
+		affected.add(Blocks.GRAVEL, Blocks.SOUL_SAND);
 		affected.add(new IStateMapping() {
 			public boolean canConvert(IBlockState state) {
 				return state.getBlock() instanceof BlockBush;
 			}
 			public IBlockState getConverted(IBlockState state) {
-				return Blocks.nether_wart.getDefaultState();
+				return Blocks.NETHER_WART.getDefaultState();
 			}
 		});
 		affected.add(new IStateMapping() {
 			public boolean canConvert(IBlockState state) {
 				Block id = state.getBlock();
-				return (id != Blocks.quartz_ore) && (id instanceof BlockOre);
+				return (id != Blocks.QUARTZ_ORE) && (id instanceof BlockOre);
 			}
 			public IBlockState getConverted(IBlockState state) {
-				return Blocks.quartz_ore.getDefaultState();
+				return Blocks.QUARTZ_ORE.getDefaultState();
 			}
 		});
 		affected.add(snowConversion);
@@ -79,7 +79,7 @@ public class SpellInferno extends SpellFire {
 	}
 	
 	public boolean update(Entity source) {
-		return updateAt(null, source.worldObj, source.posX, source.posY, source.posZ, 0);
+		return updateAt(null, source.getEntityWorld(), source.posX, source.posY, source.posZ, 0);
 	}
 	
 	public boolean updateAt(EntitySpell source, World w, double x, double y, double z, int level) {

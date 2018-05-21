@@ -1,14 +1,13 @@
 package com.sollace.unicopia.client.render;
 
 import com.sollace.unicopia.client.model.ModelGem;
+import com.sollace.unicopia.entity.EntitySpell;
 
+import net.minecraft.client.renderer.entity.RenderLiving;
 import net.minecraft.client.renderer.entity.RenderManager;
-import net.minecraft.client.renderer.entity.RendererLivingEntity;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.util.ResourceLocation;
 
-public class RenderGem extends RendererLivingEntity {
+public class RenderGem extends RenderLiving<EntitySpell> {
 	
 	private static final ResourceLocation gem = new ResourceLocation("unicopia", "textures/entity/gem.png");
 	
@@ -16,15 +15,15 @@ public class RenderGem extends RendererLivingEntity {
 		super(rendermanagerIn, new ModelGem(), 0);
 	}
 	
-	protected ResourceLocation getEntityTexture(Entity entity) {
+	protected ResourceLocation getEntityTexture(EntitySpell entity) {
 		return gem;
 	}
 	
-	protected float getDeathMaxRotation(EntityLivingBase entity) {
+	protected float getDeathMaxRotation(EntitySpell entity) {
 		return 0;
     }
 	
-	protected boolean canRenderName(EntityLivingBase targetEntity) {
+	protected boolean canRenderName(EntitySpell targetEntity) {
         return super.canRenderName(targetEntity) && (targetEntity.getAlwaysRenderNameTagForRender() || targetEntity.hasCustomName() && targetEntity == this.renderManager.pointedEntity);
     }
 }

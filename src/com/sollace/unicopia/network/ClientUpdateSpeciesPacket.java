@@ -12,7 +12,7 @@ import com.sollace.unicopia.network.UpdateSpeciesPacket.Message;
 
 public class ClientUpdateSpeciesPacket implements IMessageHandler<UpdateSpeciesPacket.Message, IMessage, INetHandler> {
 		public IMessage onMessage(Message message, INetHandler ctx) {
-			EntityPlayer player = (EntityPlayer)(Minecraft.getMinecraft().thePlayer);
+			EntityPlayer player = (EntityPlayer)(Minecraft.getMinecraft().player);
 			Settings.setSpecies(message.species, message.persist);
 			PlayerExtension.get(player).updateIsFlying(message.species, message.isFlying);
 			player.sendPlayerAbilities();

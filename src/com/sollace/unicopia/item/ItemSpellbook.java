@@ -11,14 +11,14 @@ import net.minecraft.dispenser.IBlockSource;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemBook;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.BlockPos;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.world.World;
 
 public class ItemSpellbook extends ItemBook {
 	private static final IBehaviorDispenseItem dispenserBehavior = new BehaviorDefaultDispenseItem() {
 		protected ItemStack dispenseStack(IBlockSource source, ItemStack stack) {
-			EnumFacing facing = BlockDispenser.getFacing(source.getBlockMetadata());
+			EnumFacing facing = source.getBlockState().getValue(BlockDispenser.FACING);
 			BlockPos pos = source.getBlockPos().offset(facing);
 			int yaw = 0;
 			
@@ -37,7 +37,7 @@ public class ItemSpellbook extends ItemBook {
 			
 			yaw = facing.getOpposite().getHorizontalIndex() * 90;
 			placeBook(source.getWorld(), pos.getX(), pos.getY(), pos.getZ(), yaw);
-			stack.stackSize--;
+			stack.shrink(1);
 			return stack;
 		}
 	};
@@ -47,8 +47,8 @@ public class ItemSpellbook extends ItemBook {
 		setMaxDamage(0);
 		setUnlocalizedName(name);
         maxStackSize = 1;
-        setCreativeTab(CreativeTabs.tabBrewing);
-        BlockDispenser.dispenseBehaviorRegistry.putObject(this, dispenserBehavior);
+        setCreativeTab(CreativeTabs.BREWING);
+        BlockDispenser.DISPENSE_BEHAVIOR_REGISTRY.putObject(this, dispenserBehavior);
 	}
 	
 	public boolean onItemUse(ItemStack stack, EntityPlayer player, World world, BlockPos pos, EnumFacing side, float hitX, float hitY, float hitZ) {
@@ -61,7 +61,7 @@ public class ItemSpellbook extends ItemBook {
                 float yaw = (float)Math.toDegrees(Math.atan2(diffZ, diffX) + Math.PI);
 	    		
 	            placeBook(world, pos.getX(), pos.getY(), pos.getZ(), yaw);
-	            if (!player.capabilities.isCreativeMode) stack.stackSize--;
+	            if (!player.capabilities.isCreativeMode) stack.shrink(1);
 	            return true;
     		}
     	}
@@ -73,7 +73,7 @@ public class ItemSpellbook extends ItemBook {
 		book.setPositionAndRotation(x + 0.5, y, z + 0.5, yaw, 0);
 		book.renderYawOffset = 0;
 		book.prevRotationYaw = yaw;
-		world.spawnEntityInWorld(book);
+		world.spawnEntity(book);
 	}
 }
 

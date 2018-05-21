@@ -14,7 +14,7 @@ import io.netty.buffer.ByteBuf;
 public class UpdateSpeciesPacket implements IMessageHandler<UpdateSpeciesPacket.Message, IMessage, NetHandlerPlayServer> {
 
 	public IMessage onMessage(Message message, NetHandlerPlayServer ctx) {
-		EntityPlayer player = ctx.playerEntity;
+		EntityPlayer player = ctx.player;
 		message.species = PlayerSpeciesRegister.setPlayerSpecies(player, message.species);
 		PlayerExtension prop = PlayerExtension.get(player);
 		prop.updateIsFlying(message.species);
@@ -38,7 +38,7 @@ public class UpdateSpeciesPacket implements IMessageHandler<UpdateSpeciesPacket.
 		
 		public void fromBytes(ByteBuf buf) {
 			int ind = buf.readInt();
-			if (ind >= 0 && ind < species.values().length) {
+			if (ind >= 0 && ind < Race.values().length) {
 				species = Race.values()[ind];
 			} else {
 				species = Race.EARTH;

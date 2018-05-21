@@ -6,11 +6,12 @@ import net.minecraft.block.BlockGrass;
 import net.minecraft.block.IGrowable;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.util.BlockPos;
-import net.minecraft.util.MovingObjectPosition;
-import net.minecraft.util.MovingObjectPosition.MovingObjectType;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.world.World;
 
+import com.blazeloader.api.world.ApiWorld;
+import com.blazeloader.api.world.AuxilaryEffects;
 import com.sollace.unicopia.PlayerExtension;
 import com.sollace.unicopia.Race;
 import com.sollace.unicopia.Unicopia;
@@ -39,8 +40,8 @@ public class PowerGrow extends Power<Power.LocationData> {
 	}
 
 	public LocationData tryActivate(EntityPlayer player, World w) {
-		MovingObjectPosition ray = ClientSide.getMousOver();
-		if (ray != null && ray.typeOfHit == MovingObjectType.BLOCK) {
+		RayTraceResult ray = ClientSide.getMousOver();
+		if (ray != null && ray.typeOfHit == RayTraceResult.Type.BLOCK) {
 			return new LocationData(ray.getBlockPos());
 		}
 		return null;
@@ -59,8 +60,8 @@ public class PowerGrow extends Power<Power.LocationData> {
 			for (int y = -diameter; y < diameter; y++) {
 				for (int z = -diameter; z < diameter; z++) {
 					BlockPos pos = new BlockPos(data.x + x, data.y + y, data.z + z);
-					IBlockState state = player.worldObj.getBlockState(pos);
-					count += applySingle(player.worldObj, state, pos);
+					IBlockState state = player.world.getBlockState(pos);
+					count += applySingle(player.world, state, pos);
 				}
 			}
 		}
@@ -73,8 +74,8 @@ public class PowerGrow extends Power<Power.LocationData> {
             if (g.canGrow(w, pos, state, w.isRemote) && g.canUseBonemeal(w, w.rand, pos, state)) {
         		while (g.canGrow(w, pos, state, w.isRemote)) {
                     g.grow(w, w.rand, pos, state);
-                    w.playAuxSFX(2005, pos, 0);
-                    if (g instanceof BlockDoublePlant) w.playAuxSFX(2005, pos.up(), 0);
+                    ApiWorld.playAuxSFX(w, AuxilaryEffects.BONEMEAL, pos, 0);
+                    if (g instanceof BlockDoublePlant) ApiWorld.playAuxSFX(w, AuxilaryEffects.BONEMEAL, pos.up(), 0);
                     state = w.getBlockState(pos);
                 }
             	return 1;

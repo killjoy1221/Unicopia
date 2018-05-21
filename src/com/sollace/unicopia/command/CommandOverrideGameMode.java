@@ -7,24 +7,25 @@ import net.minecraft.command.CommandGameMode;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.command.WrongUsageException;
 import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.util.ChatComponentTranslation;
-import net.minecraft.world.WorldSettings.GameType;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.util.text.TextComponentTranslation;
+import net.minecraft.world.GameType;
 
 public class CommandOverrideGameMode extends CommandGameMode {
-	public void processCommand(ICommandSender sender, String[] params) throws CommandException {
+	public void execute(MinecraftServer server, ICommandSender sender, String[] params) throws CommandException {
         if (params.length <= 0) {
         	throw new WrongUsageException("commands.gamemode.usage");
         }
         GameType gametype = getGameModeFromCommand(sender, params[0]);
-        EntityPlayerMP entityplayermp = params.length >= 2 ? getPlayer(sender, params[1]) : getCommandSenderAsPlayer(sender);
+        EntityPlayerMP entityplayermp = params.length >= 2 ? getPlayer(server, sender, params[1]) : getCommandSenderAsPlayer(sender);
         updateGameMode(entityplayermp, gametype);
         entityplayermp.fallDistance = 0.0F;
-        ChatComponentTranslation chatcomponenttranslation = new ChatComponentTranslation("gameMode." + gametype.getName(), new Object[0]);
+        TextComponentTranslation chatcomponenttranslation = new TextComponentTranslation("gameMode." + gametype.getName(), new Object[0]);
 
         if (entityplayermp != sender) {
-        	notifyOperators(sender, this, 1, "commands.gamemode.success.other", entityplayermp.getCommandSenderName(), chatcomponenttranslation);
+        	notifyCommandListener(sender, this, 1, "commands.gamemode.success.other", entityplayermp.getName(), chatcomponenttranslation);
         } else {
-            notifyOperators(sender, this, 1, "commands.gamemode.success.self", chatcomponenttranslation);
+        	notifyCommandListener(sender, this, 1, "commands.gamemode.success.self", chatcomponenttranslation);
         }
     }
 	

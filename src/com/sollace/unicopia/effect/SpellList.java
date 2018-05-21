@@ -7,6 +7,8 @@ import java.util.Map;
 import com.sollace.unicopia.Unicopia;
 import com.sollace.unicopia.enchanting.SpellRecipe;
 
+import net.minecraft.util.ResourceLocation;
+
 public final class SpellList {
 	private static int nextId = 1;
 	
@@ -39,7 +41,7 @@ public final class SpellList {
 	 * @param inputs	Items/Block/ItemStacks as input (maximum 4)
 	 */
 	public static void addRecipe(String name, Object... inputs) {
-		Unicopia.getCraftingManager().addRecipe(new SpellRecipe(name, inputs));
+		Unicopia.getCraftingManager().addRecipe(new ResourceLocation(name), new SpellRecipe(name, inputs));
 	}
 	
 	/**
@@ -69,7 +71,7 @@ public final class SpellList {
 	public static IMagicEffect forId(int id) {
 		if (isEffect(id)) {
 			try {
-				Class c = idLookup.get(id).clazz;
+				Class<?> c = idLookup.get(id).clazz;
 				if (c != null) {
 					return (IMagicEffect)c.newInstance();
 				}
@@ -129,7 +131,7 @@ public final class SpellList {
 	 */
 	public static int getId(IMagicEffect obj) {
 		if (obj == null) return 0;
-		Class clazz = obj.getClass();
+		Class<?> clazz = obj.getClass();
 		return classLookup.containsKey(clazz) ? classLookup.get(clazz).id : 0;
 	}
 	

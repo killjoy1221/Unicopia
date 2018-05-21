@@ -4,11 +4,11 @@ import java.util.List;
 
 import com.google.common.base.Predicate;
 
-import net.minecraft.command.IEntitySelector;
 import net.minecraft.entity.Entity;
-import net.minecraft.util.AxisAlignedBB;
-import net.minecraft.util.MovingObjectPosition;
-import net.minecraft.util.Vec3;
+import net.minecraft.util.EntitySelectors;
+import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.util.math.RayTraceResult;
+import net.minecraft.util.math.Vec3d;
 
 public class VecHelper {
 	
@@ -19,13 +19,13 @@ public class VecHelper {
 	 * @param distance		Maximum distance
 	 * @param partialTick	Client partial ticks
 	 * 
-	 * @return	MovingObjectPosition result or null
+	 * @return	RayTraceResult result or null
 	 */
-	public static MovingObjectPosition rayTrace(Entity e, double distance, float partialTick) {
-        Vec3 pos = geteEyePosition(e, partialTick);
-        Vec3 look = e.getLook(partialTick);
-        Vec3 ray = pos.addVector(look.xCoord * distance, look.yCoord * distance, look.zCoord * distance);
-        return e.worldObj.rayTraceBlocks(pos, ray, false, false, true);
+	public static RayTraceResult rayTrace(Entity e, double distance, float partialTick) {
+        Vec3d pos = geteEyePosition(e, partialTick);
+        Vec3d look = e.getLook(partialTick);
+        Vec3d ray = pos.addVector(look.x * distance, look.y * distance, look.z * distance);
+        return e.world.rayTraceBlocks(pos, ray, false, false, true);
 	}
 	
 	/**
@@ -36,13 +36,13 @@ public class VecHelper {
 	 * 
 	 * @return A vector of the entity's eye position
 	 */
-	public static Vec3 geteEyePosition(Entity e, float partialTick) {
+	public static Vec3d geteEyePosition(Entity e, float partialTick) {
 		double eyeHeight = e.getEyeHeight();
-        if (partialTick == 1) return new Vec3(e.posX, e.posY + eyeHeight, e.posZ);
+        if (partialTick == 1) return new Vec3d(e.posX, e.posY + eyeHeight, e.posZ);
         double x = e.prevPosX + (e.posX - e.prevPosX) * partialTick;
         double y = e.prevPosY + (e.posY - e.prevPosY) * partialTick + eyeHeight;
         double z = e.prevPosZ + (e.posZ - e.prevPosZ) * partialTick;
-        return new Vec3(x, y, z);
+        return new Vec3d(x, y, z);
 	}
 	
 	/**
@@ -52,10 +52,10 @@ public class VecHelper {
 	 * @param distance		Maximum distance
 	 * @param partialTick	Client partial ticks
 	 * 
-	 * @return	MovingObjectPosition result or null
+	 * @return	RayTraceResult result or null
 	 */
-	public static MovingObjectPosition getObjectMouseOver(Entity e, double distance, float partialTick) {
-		return getObjectMouseOverExcept(e, distance, partialTick, IEntitySelector.NOT_SPECTATING);
+	public static RayTraceResult getObjectMouseOver(Entity e, double distance, float partialTick) {
+		return getObjectMouseOverExcept(e, distance, partialTick, EntitySelectors.NOT_SPECTATING);
 	}
 	
 	/**
@@ -68,32 +68,32 @@ public class VecHelper {
 	 * @param partialTick	Client partial ticks
 	 * @param predicate		Predicate test to filter entities
 	 * 
-	 * @return	MovingObjectPosition result or null
+	 * @return	RayTraceResult result or null
 	 */
-	public static MovingObjectPosition getObjectMouseOverExcept(Entity e, double distance, float partialTick, Predicate predicate) {
-        MovingObjectPosition tracedBlock = rayTrace(e, distance, partialTick);
+	public static RayTraceResult getObjectMouseOverExcept(Entity e, double distance, float partialTick, Predicate<Entity> predicate) {
+        RayTraceResult tracedBlock = rayTrace(e, distance, partialTick);
         
         double totalTraceDistance = distance;
         
-        Vec3 pos = geteEyePosition(e, partialTick);
+        Vec3d pos = geteEyePosition(e, partialTick);
         
         if (tracedBlock != null) totalTraceDistance = tracedBlock.hitVec.distanceTo(pos);
         
-        Vec3 look = e.getLook(partialTick);
-        Vec3 ray = pos.addVector(look.xCoord * distance, look.yCoord * distance, look.zCoord * distance);
+        Vec3d look = e.getLook(partialTick);
+        Vec3d ray = pos.addVector(look.x * distance, look.y * distance, look.z * distance);
     	
-        Vec3 hit = null;
+        Vec3d hit = null;
         Entity pointedEntity = null;
-        List<Entity> entitiesWithinRange = e.worldObj.getEntitiesInAABBexcluding(e, e.getEntityBoundingBox().addCoord(look.xCoord * distance, look.yCoord * distance, look.zCoord * distance).expand(1, 1, 1), predicate);
+        List<Entity> entitiesWithinRange = e.world.getEntitiesInAABBexcluding(e, e.getEntityBoundingBox().grow(look.x * distance, look.y * distance, look.z * distance).expand(1, 1, 1), predicate);
         
         double traceDistance = totalTraceDistance;
         for (Entity entity : entitiesWithinRange) {
             if (entity.canBeCollidedWith()) {
                 double size = entity.getCollisionBorderSize();
                 AxisAlignedBB entityAABB = entity.getEntityBoundingBox().expand(size, size, size);
-                MovingObjectPosition intercept = entityAABB.calculateIntercept(pos, ray);
+                RayTraceResult intercept = entityAABB.calculateIntercept(pos, ray);
                 
-                if (entityAABB.isVecInside(pos)) {
+                if (entityAABB.contains(pos)) {
                     if (0 < traceDistance || traceDistance == 0) {
                         pointedEntity = entity;
                         hit = intercept == null ? pos : intercept.hitVec;
@@ -102,7 +102,7 @@ public class VecHelper {
                 } else if (intercept != null) {
                     double distanceToHit = pos.distanceTo(intercept.hitVec);
                     if (distanceToHit < traceDistance || traceDistance == 0) {
-                        if (entity == e.ridingEntity) {
+                        if (entity == e.getRidingEntity()) {
                             if (traceDistance == 0) {
                                 pointedEntity = entity;
                                 hit = intercept.hitVec;
@@ -118,7 +118,7 @@ public class VecHelper {
         }
         
         if (pointedEntity != null && (traceDistance < totalTraceDistance || tracedBlock == null)) {
-            return new MovingObjectPosition(pointedEntity, hit);
+            return new RayTraceResult(pointedEntity, hit);
         }
         return tracedBlock;
     }

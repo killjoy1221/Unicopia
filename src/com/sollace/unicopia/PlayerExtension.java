@@ -18,7 +18,9 @@ import com.sollace.unicopia.power.Power;
 import com.sollace.unicopia.server.PlayerSpeciesRegister;
 
 import net.minecraft.block.Block;
+import net.minecraft.block.SoundType;
 import net.minecraft.block.material.Material;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.network.NetworkPlayerInfo;
 import net.minecraft.crash.CrashReportCategory;
 import net.minecraft.entity.Entity;
@@ -28,12 +30,14 @@ import net.minecraft.entity.ai.attributes.AttributeModifier;
 import net.minecraft.entity.ai.attributes.IAttributeInstance;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EnumPlayerModelParts;
+import net.minecraft.init.MobEffects;
+import net.minecraft.init.SoundEvents;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.potion.Potion;
 import net.minecraft.potion.PotionEffect;
-import net.minecraft.util.BlockPos;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.DamageSource;
-import net.minecraft.util.MathHelper;
+import net.minecraft.util.SoundEvent;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
 
 public class PlayerExtension implements IEntityProperties {
@@ -57,7 +61,7 @@ public class PlayerExtension implements IEntityProperties {
 	private boolean abilityTriggered = false;
 	private int abilityWarmup = 0;
 	private int abilityCooldown = 0;
-	private Power activeAbility = null;
+	private Power<?> activeAbility = null;
 	
 	private PlayerExtension(EntityPlayer p) {
 		player = p;
@@ -138,7 +142,7 @@ public class PlayerExtension implements IEntityProperties {
 		}
 	}
 	
-	public void readFromNBT(NBTTagCompound compound) {
+	public PlayerExtension readFromNBT(NBTTagCompound compound) {
 		if (compound.hasKey("pony_ability")) {
 			NBTTagCompound ability = compound.getCompoundTag("pony_ability");
 			activeAbility = Power.powerFromName(ability.getString("name"));
@@ -148,7 +152,7 @@ public class PlayerExtension implements IEntityProperties {
 		}
 		
 		if (compound.hasKey("disguise")) {
-			this.disguise.setWorld(player.worldObj);
+			this.disguise.setWorld(player.world);
 			this.disguise.readFromNBT(compound.getCompoundTag("disguise"));
 		}
 		
@@ -171,13 +175,14 @@ public class PlayerExtension implements IEntityProperties {
 				effect.readFromNBT(effectTag);
 			}
 		}
+		return this;
 	}
 	
 	public void entityInit(Entity entity, World world) {}
 	
 	public void addEntityCrashInfo(CrashReportCategory catagory) {}
 	
-	public void tryUseAbility(Power p) {
+	public void tryUseAbility(Power<?> p) {
 		if ((abilityTriggered && abilityCooldown <= 0) || (p != null && activeAbility != p)) {
 			abilityTriggered = false;
 			activeAbility = p;
@@ -199,9 +204,9 @@ public class PlayerExtension implements IEntityProperties {
 					activeAbility.preApply(player);
 					abilityWarmup++;
 				} else {
-					if (player.getCommandSenderName().contentEquals(ApiClient.getPlayer().getCommandSenderName())) {
-						if (activeAbility.canActivate(player.worldObj, player)) {
-							abilityTriggered = activeAbility.Activated(player, player.worldObj);
+					if (player.getName().contentEquals(ApiClient.getPlayer().getName())) {
+						if (activeAbility.canActivate(player.world, player)) {
+							abilityTriggered = activeAbility.Activated(player, player.world);
 							if (!abilityTriggered) {
 								activeAbility = null;
 								abilityCooldown = 0;
@@ -235,7 +240,7 @@ public class PlayerExtension implements IEntityProperties {
 			effect = null;
 		}
 		if (effect != null) {
-			if (player.worldObj.isRemote && player.worldObj.getWorldTime() % 10 == 0) {
+			if (player.world.isRemote && player.world.getWorldTime() % 10 == 0) {
 				effect.render(player);
 			}
 			if (!effect.update(player)) {
@@ -246,7 +251,7 @@ public class PlayerExtension implements IEntityProperties {
 	}
 	
 	protected void applyModifiers(Race species) {
-		IAttributeInstance strength = player.getEntityAttribute(SharedMonsterAttributes.attackDamage);
+		IAttributeInstance strength = player.getEntityAttribute(SharedMonsterAttributes.ATTACK_DAMAGE);
 		if (species.canUseEarth()) {
 			if (strength.getModifier(earthPonyStrength.getID()) == null) {
 				strength.applyModifier(earthPonyStrength);
@@ -278,7 +283,7 @@ public class PlayerExtension implements IEntityProperties {
 					player.capabilities.allowFlying = true;
 					if (player.capabilities.isFlying) {
 						ticksSinceLanding = 0;
-						player.addExhaustion(player.worldObj.rand.nextInt(15) < 5 ? 0.03f : 0.015f);
+						player.addExhaustion(player.world.rand.nextInt(15) < 5 ? 0.03f : 0.015f);
 					}
 				} else {
 					player.capabilities.allowFlying = player.capabilities.isFlying = false;
@@ -312,26 +317,27 @@ public class PlayerExtension implements IEntityProperties {
 	
 	public void fall(float distance, float damageMultiplier) {
         if (distance <= 0) return;
-        PotionEffect potioneffect = player.getActivePotionEffect(Potion.jump);
+        PotionEffect potioneffect = player.getActivePotionEffect(MobEffects.JUMP_BOOST);
         float potion = potioneffect != null ? potioneffect.getAmplifier() + 1 : 0;
-        int i = MathHelper.ceiling_float_int((distance - 8.0F - potion) * damageMultiplier);
+        int i = MathHelper.ceil((distance - 8.0F - potion) * damageMultiplier);
         if (i > 0) {
-            int j = MathHelper.floor_double(player.posX);
-            int k = MathHelper.floor_double(player.posY - 0.20000000298023224D);
-            int l = MathHelper.floor_double(player.posZ);
-            Block block = player.worldObj.getBlockState(new BlockPos(j, k, l)).getBlock();
+            int j = MathHelper.floor(player.posX);
+            int k = MathHelper.floor(player.posY - 0.20000000298023224D);
+            int l = MathHelper.floor(player.posZ);
+            IBlockState state = player.world.getBlockState(new BlockPos(j, k, l));
+            Block block = state.getBlock();
             
-            if (block.getMaterial() != Material.air && block.getMaterial() != Unicopia.Materials.cloud) {
+            if (state.getMaterial() != Material.AIR && state.getMaterial() != Unicopia.Materials.cloud) {
                 player.playSound(getFallSound(i), 1, 1);
-                player.attackEntityFrom(DamageSource.fall, i);
-                Block.SoundType soundtype = block.stepSound;
-                player.playSound(soundtype.getStepSound(), soundtype.getVolume() * 0.5f, soundtype.getFrequency() * 0.75f);
+                player.attackEntityFrom(DamageSource.FALL, i);
+                SoundType soundtype = block.getSoundType();
+                player.playSound(soundtype.getStepSound(), soundtype.getVolume() * 0.5f, soundtype.getPitch() * 0.75f);
             }
         }
 	}
 	
-    protected String getFallSound(int distance) {
-        return distance > 4 ? "game.player.hurt.fall.big" : "game.player.hurt.fall.small";
+    protected SoundEvent getFallSound(int distance) {
+        return distance > 4 ? SoundEvents.ENTITY_PLAYER_BIG_FALL : SoundEvents.ENTITY_PLAYER_SMALL_FALL;
     }
     
     public SkinType getSkinType() {

@@ -9,25 +9,25 @@ import com.google.common.base.Charsets;
 import com.sollace.unicopia.power.IData;
 import com.sollace.unicopia.power.Power;
 
-public class PPacket implements IMessageHandler<PPacket.Message, IMessage, NetHandlerPlayServer> {
+public class PPacket<T extends IData> implements IMessageHandler<PPacket.Message<T>, IMessage, NetHandlerPlayServer> {
 	
-	public IMessage onMessage(PPacket.Message message, NetHandlerPlayServer handler) {
+	public IMessage onMessage(PPacket.Message<T> message, NetHandlerPlayServer handler) {
 		if (message.payload != null) {
-			message.power.apply(handler.playerEntity, message.payload);
+			message.power.apply(handler.player, message.payload);
 		}
 		return null;
 	}
 	
-	public static class Message implements IMessage {
-		private IData payload;
+	public static class Message<T extends IData> implements IMessage {
 		
-		private Power power;
+		private T payload;
+		private Power<T> power;
 		
 		public Message() {
 			
 		}
 		
-		public Message(Power power, IData data) {
+		public Message(Power<T> power, T data) {
 			this.power = power;
 			this.payload = data;
 		}

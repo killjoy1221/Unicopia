@@ -8,6 +8,7 @@ import net.minecraft.init.Items;
 import net.minecraft.inventory.InventoryCrafting;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.IRecipe;
+import net.minecraft.util.NonNullList;
 import net.minecraft.world.World;
 
 public class RecipeEnchanting implements IRecipe {
@@ -26,23 +27,23 @@ public class RecipeEnchanting implements IRecipe {
         return output;
     }
 	
-	public ItemStack[] getRemainingItems(InventoryCrafting inv) {
-        ItemStack[] stacks = new ItemStack[inv.getSizeInventory()];
-        for (int i = 0; i < stacks.length; i++) {
+	public NonNullList<ItemStack> getRemainingItems(InventoryCrafting inv) {
+		NonNullList<ItemStack> stacks = NonNullList.<ItemStack>withSize(inv.getSizeInventory(), ItemStack.EMPTY);
+        for (int i = 0; i < stacks.size(); i++) {
             ItemStack stack = inv.getStackInSlot(i);
             if (stack != null) {
             	if (stack.getItem() == input.getItem() && stack.getMetadata() == input.getMetadata()) {
-            		stack.stackSize = 0;
+            		stack.setCount(0);
             	} else if (stack.hasEffect()) {
-	            	Map<Integer, Integer> enchants = EnchantmentHelper.getEnchantments(stack);
-	    			if (enchants.containsKey(effect.effectId)) {
-	    				if (stack.getItem() == Items.enchanted_book) {
-    		            	stacks[i] = new ItemStack(Items.book);
-    		            	stacks[i].stackSize = stack.stackSize;
+            		Map<Enchantment, Integer> enchants = EnchantmentHelper.getEnchantments(stack);
+	    			if (enchants.containsKey(effect)) {
+	    				if (stack.getItem() == Items.ENCHANTED_BOOK) {
+	    					stacks.set(i, new ItemStack(Items.BOOK));
+    		            	stacks.get(i).setCount(stack.getCount());
 	    	            } else {
-		    				enchants.remove(effect.effectId);
-		    				stacks[i] = stack.copy();
-							EnchantmentHelper.setEnchantments(enchants, stacks[i]);
+		    				enchants.remove(effect);
+		    				stacks.set(i, stack.copy());
+							EnchantmentHelper.setEnchantments(enchants, stacks.get(i));
 	    	            }
 	    			}
 	            }
@@ -59,8 +60,8 @@ public class RecipeEnchanting implements IRecipe {
 				ItemStack stack = inv.getStackInRowAndColumn(x, y);
 				if (stack != null) {
 					if (!hasEnchant && stack.hasEffect()) {
-						Map<Integer, Integer> enchants = EnchantmentHelper.getEnchantments(stack);
-						if (enchants.containsKey(effect.effectId)) {
+						Map<Enchantment, Integer> enchants = EnchantmentHelper.getEnchantments(stack);
+						if (enchants.containsKey(effect)) {
 							hasEnchant = true;
 							continue;
 						}
@@ -83,7 +84,7 @@ public class RecipeEnchanting implements IRecipe {
 			for (int y = 0; y < inv.getHeight(); y++) {
 				ItemStack stack = inv.getStackInRowAndColumn(x, y);
 				if (stack != null && stack.getItem() == input.getItem() && stack.getMetadata() == input.getMetadata()) {
-					result.stackSize = stack.stackSize;
+					result.setCount(stack.getCount());
 					return result;
 				}
 			}
@@ -91,7 +92,8 @@ public class RecipeEnchanting implements IRecipe {
         return result;
     }
 	
-	public int getRecipeSize() {
-        return 2;
-    }
+	@Override
+	public boolean canFit(int width, int height) {
+		return width * height > 2;
+	}
 }

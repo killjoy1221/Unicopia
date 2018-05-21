@@ -2,8 +2,6 @@ package com.sollace.unicopia.client.render;
 
 import net.minecraft.client.renderer.entity.RenderLiving;
 import net.minecraft.client.renderer.entity.RenderManager;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.util.ResourceLocation;
 
 import org.lwjgl.opengl.GL11;
@@ -11,7 +9,7 @@ import org.lwjgl.opengl.GL11;
 import com.sollace.unicopia.client.model.ModelCloud;
 import com.sollace.unicopia.entity.EntityCloud;
 
-public class RenderCloud extends RenderLiving {
+public class RenderCloud extends RenderLiving<EntityCloud> {
     private static final ResourceLocation cloud = new ResourceLocation("unicopia", "textures/entity/clouds.png");
     private static final ResourceLocation rainCloud = new ResourceLocation("unicopia", "textures/entity/clouds_storm.png");
     
@@ -19,11 +17,13 @@ public class RenderCloud extends RenderLiving {
         super(rendermanagerIn, new ModelCloud(), 1f);
     }
     
-    protected void preRenderCallback(EntityLivingBase par1EntityLivingBase, float par2) {
-    	scaleCloud((EntityCloud)par1EntityLivingBase, par2);
+    public float prepareScale(EntityCloud entity, float par2) {
+    	float scale = (float)entity.getCloudSize();
+    	GL11.glScalef(scale, scale, scale);
+    	return 0.0625F;
     }
     
-    protected void renderModel(EntityLivingBase p_77036_1_, float p_77036_2_, float p_77036_3_, float p_77036_4_, float p_77036_5_, float p_77036_6_, float p_77036_7_) {
+    protected void renderModel(EntityCloud p_77036_1_, float p_77036_2_, float p_77036_3_, float p_77036_4_, float p_77036_5_, float p_77036_6_, float p_77036_7_) {
         if (!p_77036_1_.isDead) {
 	    	GL11.glEnable(GL11.GL_BLEND);
 	    	if (!((EntityCloud)p_77036_1_).getOpaque()) {
@@ -36,27 +36,18 @@ public class RenderCloud extends RenderLiving {
         }
     }
     
-    protected void scaleCloud(EntityCloud entity, float par2) {
-    	float scale = (float)entity.getCloudSize();
-    	GL11.glScalef(scale, scale, scale);
-    }
-    
     protected ResourceLocation getEntityTexture(EntityCloud entity) {
     	if (entity.getIsRaining() && entity.getIsThundering()) {
     		return rainCloud;
     	}
         return cloud;
     }
-
-    protected ResourceLocation getEntityTexture(Entity par1Entity) {
-        return getEntityTexture((EntityCloud)par1Entity);
-    }
     
-    protected int getColorMultiplier(EntityLivingBase par1EntityLivingBase, float yaw, float pitch) {
+    protected int getColorMultiplier(EntityCloud par1EntityLivingBase, float yaw, float pitch) {
         return 25;
     }
     
-    protected float getDeathMaxRotation(EntityLivingBase par1EntityLivingBase) {
+    protected float getDeathMaxRotation(EntityCloud par1EntityLivingBase) {
         return 0.0F;
     }
 }

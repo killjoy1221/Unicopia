@@ -4,14 +4,12 @@ import com.sollace.unicopia.client.model.ModelSpellbook;
 import com.sollace.unicopia.entity.EntitySpellbook;
 
 import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.renderer.entity.RenderLiving;
 import net.minecraft.client.renderer.entity.RenderManager;
-import net.minecraft.client.renderer.entity.RendererLivingEntity;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.util.MathHelper;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.ResourceLocation;
 
-public class RenderSpellbook extends RendererLivingEntity {
+public class RenderSpellbook extends RenderLiving<EntitySpellbook> {
 	
 	private static final ResourceLocation texture = new ResourceLocation("textures/entity/enchanting_table_book.png");
 	
@@ -19,17 +17,17 @@ public class RenderSpellbook extends RendererLivingEntity {
 		super(rendermanagerIn, new ModelSpellbook(), 0);
 	}
 	
-	protected ResourceLocation getEntityTexture(Entity entity) {
+	protected ResourceLocation getEntityTexture(EntitySpellbook entity) {
 		return texture;
 	}
 	
-	protected float getDeathMaxRotation(EntityLivingBase entity) {
+	protected float getDeathMaxRotation(EntitySpellbook entity) {
         return 0;
     }
 	
-	protected void renderModel(EntityLivingBase entity, float time, float walkSpeed, float stutter, float yaw, float pitch, float increment) {
+	protected void renderModel(EntitySpellbook entity, float time, float walkSpeed, float stutter, float yaw, float pitch, float increment) {
 		
-		float breath = MathHelper.sin(((float)entity.getAge() + stutter) / 20.0F) * 0.01F + 0.1F;
+		float breath = MathHelper.sin(((float)entity.ticksExisted + stutter) / 20.0F) * 0.01F + 0.1F;
 		
 		float first_page_rot = walkSpeed + (breath * 10);
 		float second_page_rot = 1 - first_page_rot;
@@ -60,11 +58,11 @@ public class RenderSpellbook extends RendererLivingEntity {
 		GlStateManager.popMatrix();
 	}
 	
-	protected void rotateCorpse(EntityLivingBase entity, float p_77043_2_, float p_77043_3_, float partialTicks) {
+	protected void applyRotations(EntitySpellbook entity, float p_77043_2_, float p_77043_3_, float partialTicks) {
 		GlStateManager.rotate(-interpolateRotation(entity.prevRotationYaw, entity.rotationYaw, partialTicks), 0.0F, 1.0F, 0.0F);
 	}
 	
-	protected boolean canRenderName(EntityLivingBase targetEntity) {
+	protected boolean canRenderName(EntitySpellbook targetEntity) {
         return super.canRenderName(targetEntity) && (targetEntity.getAlwaysRenderNameTagForRender() || targetEntity.hasCustomName() && targetEntity == renderManager.pointedEntity);
     }
 }

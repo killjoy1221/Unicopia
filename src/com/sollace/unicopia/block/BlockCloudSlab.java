@@ -3,60 +3,68 @@ package com.sollace.unicopia.block;
 import java.util.List;
 import java.util.Random;
 
-import com.sollace.unicopia.Unicopia;
+import javax.annotation.Nullable;
 
-import net.minecraft.block.Block;
+import com.sollace.unicopia.Unicopia;
+import com.sollace.unicopia.block.BlockCloud.EnumType;
+
 import net.minecraft.block.BlockSlab;
+import net.minecraft.block.SoundType;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.properties.IProperty;
 import net.minecraft.block.properties.PropertyEnum;
-import net.minecraft.block.state.BlockState;
+import net.minecraft.block.state.BlockStateContainer;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.Entity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.AxisAlignedBB;
-import net.minecraft.util.BlockPos;
-import net.minecraft.util.EnumWorldBlockLayer;
+import net.minecraft.util.BlockRenderLayer;
+import net.minecraft.util.NonNullList;
+import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 
 public class BlockCloudSlab extends BlockSlab {
 	
-	public static final PropertyEnum VARIANT = PropertyEnum.create("variant", BlockCloud.EnumType.class);
+	public static final PropertyEnum<EnumType> VARIANT = PropertyEnum.create("variant", EnumType.class);
 	
 	private boolean isDouble;
 	
 	public BlockCloudSlab(boolean isDouble, Material material, String name) {
 		super(material);
-		setCreativeTab(CreativeTabs.tabBlock);
+		setCreativeTab(CreativeTabs.BUILDING_BLOCKS);
 		setHardness(0.5F);
 		setResistance(1.0F);
-		setStepSound(Block.soundTypeCloth);
+		setSoundType(SoundType.CLOTH);
 		setLightOpacity(20);
 		setUnlocalizedName(name);
 		this.isDouble = isDouble;
 		useNeighborBrightness = true;
 	}
 	
-    public boolean isVisuallyOpaque() {
-        return Unicopia.UBlocks.cloud.isVisuallyOpaque();
+	@Deprecated
+    public boolean isTranslucent(IBlockState state) {
+        return Unicopia.UBlocks.cloud.isTranslucent(state);
     }
     
-    public boolean isOpaqueCube() {
-        return isDouble() ? Unicopia.UBlocks.cloud.isOpaqueCube() : false;
+	@Deprecated
+    public boolean isOpaqueCube(IBlockState state) {
+        return isDouble() ? Unicopia.UBlocks.cloud.isOpaqueCube(state) : false;
     }
     
-    public boolean isFullCube() {
-        return isDouble() ? Unicopia.UBlocks.cloud.isFullCube() : false;
+	@Deprecated
+    public boolean isFullCube(IBlockState state) {
+        return isDouble() ? Unicopia.UBlocks.cloud.isFullCube(state) : false;
     }
     
-    public boolean isNormalCube() {
-    	return isDouble() ? Unicopia.UBlocks.cloud.isNormalCube() : false;
+	@Deprecated
+    public boolean isNormalCube(IBlockState state) {
+    	return isDouble() ? Unicopia.UBlocks.cloud.isNormalCube(state) : false;
     }
     
-    public EnumWorldBlockLayer getBlockLayer() {
+    public BlockRenderLayer getBlockLayer() {
         return Unicopia.UBlocks.cloud.getBlockLayer();
     }
     
@@ -72,26 +80,15 @@ public class BlockCloudSlab extends BlockSlab {
     	Unicopia.UBlocks.cloud.onLanded(w, entity);
     }
     
-	public void onEntityCollidedWithBlock(World w, BlockPos pos, IBlockState state, Entity entity) {
-    	Unicopia.UBlocks.cloud.onEntityCollidedWithBlock(w, pos, entity);
-    }
-	
-    public void onEntityCollidedWithBlock(World w, BlockPos pos, Entity entity) {
-    	Unicopia.UBlocks.cloud.onEntityCollidedWithBlock(w, pos, entity);
+    public void onEntityCollidedWithBlock(World w, BlockPos pos, IBlockState state, Entity entity) {
+    	Unicopia.UBlocks.cloud.onEntityCollidedWithBlock(w, pos, state, entity);
     }
     
-    public void addCollisionBoxesToList(World w, BlockPos pos, IBlockState state, AxisAlignedBB axis, List list, Entity entity) {
-        super.setBlockBoundsBasedOnState(w, pos);
-        if (BlockCloud.getCanInteract(state, entity)) {
-	        double maxy = pos.getY() + maxY;
-	        maxy -= 0.1;
-	        
-	        AxisAlignedBB axisalignedbb1 = AxisAlignedBB.fromBounds(pos.getX() + minX, pos.getY() + minY, pos.getZ() + minZ, pos.getX() + maxX, maxy, pos.getZ() + maxZ);
-	    	
-	        if (axisalignedbb1 != null && axis.intersectsWith(axisalignedbb1)) {
-	            list.add(axisalignedbb1);
-	        }
-        }
+    @Deprecated
+    public void addCollisionBoxToList(IBlockState state, World worldIn, BlockPos pos, AxisAlignedBB entityBox, List<AxisAlignedBB> collidingBoxes, @Nullable Entity entity, boolean p_185477_7_) {
+    	if (BlockCloud.getCanInteract(state, entity)) {
+    		super.addCollisionBoxToList(state, worldIn, pos, entityBox, collidingBoxes, entity, p_185477_7_);
+    	}
     }
     
     public Item getItemDropped(int side, Random rand, int data) {
@@ -110,7 +107,7 @@ public class BlockCloudSlab extends BlockSlab {
         return super.getUnlocalizedName() + "." + BlockCloud.EnumType.byMetadata(meta).getUnlocalizedName();
     }
 
-    public IProperty getVariantProperty() {
+    public IProperty<EnumType> getVariantProperty() {
         return VARIANT;
     }
 
@@ -118,8 +115,8 @@ public class BlockCloudSlab extends BlockSlab {
         return BlockCloud.EnumType.byMetadata(stack.getMetadata() & 7);
     }
     
-    public void getSubBlocks(Item itemIn, CreativeTabs tab, List list) {
-    	Unicopia.UBlocks.cloud.getSubBlocks(itemIn, tab, list);
+    public void getSubBlocks(CreativeTabs tab, NonNullList<ItemStack> list) {
+    	Unicopia.UBlocks.cloud.getSubBlocks(tab, list);
     }
     
     public IBlockState getStateFromMeta(int meta) {
@@ -142,8 +139,8 @@ public class BlockCloudSlab extends BlockSlab {
         return result;
     }
 
-    protected BlockState createBlockState() {
-        return isDouble() ? new BlockState(this, new IProperty[] {VARIANT}): new BlockState(this, new IProperty[] {HALF, VARIANT});
+    protected BlockStateContainer createBlockState() {
+        return new BlockStateContainer(this, isDouble() ? new IProperty[] {VARIANT} : new IProperty[] {HALF, VARIANT});
     }
     
     public int damageDropped(IBlockState state) {
@@ -152,5 +149,10 @@ public class BlockCloudSlab extends BlockSlab {
     
 	public boolean isDouble() {
 		return isDouble;
+	}
+
+	@Override
+	public Comparable<EnumType> getTypeForItem(ItemStack stack) {
+		return EnumType.byMetadata(stack.getMetadata() & 7);
 	}
 }

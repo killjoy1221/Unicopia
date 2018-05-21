@@ -2,6 +2,8 @@ package com.sollace.unicopia.effect;
 
 import java.util.List;
 
+import com.blazeloader.api.privileged.ITasked;
+
 import com.sollace.unicopia.entity.EntitySpell;
 import com.sollace.util.Util;
 import com.sollace.util.entity.EntityAIFollowOwner;
@@ -9,7 +11,7 @@ import com.sollace.util.entity.EntityAIFollowOwner;
 import net.minecraft.entity.ai.EntityAISwimming;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.pathfinding.PathNavigateGround;
-import net.minecraft.util.AxisAlignedBB;
+import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.world.World;
 
 public class SpellMinion extends Spell {
@@ -31,14 +33,15 @@ public class SpellMinion extends Spell {
 	public boolean updateAt(EntitySpell source, World w, double x, double y, double z, int level) {
 		if (firstUpdate) {
 			firstUpdate = false;
-			((PathNavigateGround)source.getNavigator()).setAvoidsWater(true);
-			source.tasks.addTask(1, new EntityAISwimming(source));
-			source.tasks.addTask(2, new EntityAIFollowOwner(source, 1, 4, 6));
+			((PathNavigateGround)source.getNavigator()).setCanSwim(false);
+			((ITasked)source).getAITasks().addTask(1, new EntityAISwimming(source));
+			((ITasked)source).getAITasks().addTask(2, new EntityAIFollowOwner<EntitySpell>(source, 1, 4, 6));
 		}
 		
 		if (piggyBackSpell == null) {
 			AxisAlignedBB bb = new AxisAlignedBB(x - 2, y - 2, z - 2, x + 2, y + 2, z + 2);
-			List<EntitySpell> entities = (List<EntitySpell>)w.getEntitiesInAABBexcluding(source, bb, Util.SPELLS);
+			@SuppressWarnings({ "unchecked", "rawtypes" })
+			List<EntitySpell> entities = (List)w.getEntitiesInAABBexcluding(source, bb, Util.SPELLS);
 			for (EntitySpell i : entities) {
 				IMagicEffect e = i.getEffect();
 				if (e != null && !(e instanceof SpellMinion)) {

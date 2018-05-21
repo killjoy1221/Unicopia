@@ -10,7 +10,8 @@ import net.minecraft.block.state.IBlockState;
  * 
  */
 public class StateMapList extends ArrayList<IStateMapping> {
-	
+	private static final long serialVersionUID = 2602772651960588745L;
+
 	/**
 	 * Adds a new mapping from one block to the other. Returns the mapping object to allow specifying metadata mapping.
 	 * @param from	Block to map from
@@ -115,6 +116,7 @@ public class StateMapList extends ArrayList<IStateMapping> {
 		/**
 		 * Gets the grassed variant corresponding to the given state.
 		 */
+		@SuppressWarnings("deprecation")
 		public IBlockState getConverted(IBlockState state) {
 			return getTo().getStateFromMeta(getToData(state.getBlock().getMetaFromState(state)));
 		}

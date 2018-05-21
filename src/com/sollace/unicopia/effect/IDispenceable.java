@@ -1,7 +1,7 @@
 package com.sollace.unicopia.effect;
 
 import net.minecraft.dispenser.IBlockSource;
-import net.minecraft.util.BlockPos;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.EnumFacing;
 
 /**

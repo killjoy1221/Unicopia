@@ -9,7 +9,6 @@ import com.blazeloader.api.particles.ParticleData;
 import com.blazeloader.api.world.AuxilaryEffects;
 import com.blazeloader.util.shape.IShape;
 import com.blazeloader.util.shape.Sphere;
-import com.google.common.collect.ImmutableSet;
 import com.sollace.unicopia.PlayerExtension;
 import com.sollace.unicopia.Race;
 import com.sollace.unicopia.Settings;
@@ -31,12 +30,11 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
 import net.minecraft.init.Items;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.AxisAlignedBB;
-import net.minecraft.util.BlockPos;
+import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.EnumParticleTypes;
-import net.minecraft.util.MovingObjectPosition;
-import net.minecraft.util.MovingObjectPosition.MovingObjectType;
 import net.minecraft.world.World;
 
 public class PowerStomp extends Power<PowerStomp.Data> {
@@ -62,8 +60,8 @@ public class PowerStomp extends Power<PowerStomp.Data> {
 	}
 	
 	public Data tryActivate(EntityPlayer player, World w) {
-		MovingObjectPosition mop = VecHelper.getObjectMouseOver(player, 2, 1);
-		if (mop != null && mop.typeOfHit == MovingObjectType.BLOCK) {
+		RayTraceResult mop = VecHelper.getObjectMouseOver(player, 2, 1);
+		if (mop != null && mop.typeOfHit == RayTraceResult.Type.BLOCK) {
 			BlockPos pos = mop.getBlockPos();
 			IBlockState state = w.getBlockState(pos);
 			if (state.getBlock() instanceof BlockLog) {
@@ -110,7 +108,7 @@ public class PowerStomp extends Power<PowerStomp.Data> {
 			} else {
 				IBlockState state = w.getBlockState(pos);
 				state.getBlock().dropBlockAsItem(w, pos, state, 0);
-				w.setBlockState(pos, Blocks.air.getDefaultState(), 3);
+				w.setBlockState(pos, Blocks.AIR.getDefaultState(), 3);
 			}
 			removeTreePart(w, log, pos.up(), level + 1);
 			removeTreePart(w, log, pos.north(), level + 1);
@@ -134,7 +132,7 @@ public class PowerStomp extends Power<PowerStomp.Data> {
 				} else {
 					state = w.getBlockState(pos);
 					state.getBlock().dropBlockAsItem(w, pos, state, 0);
-					w.setBlockState(pos, Blocks.air.getDefaultState(), 3);
+					w.setBlockState(pos, Blocks.AIR.getDefaultState(), 3);
 				}
 				breaks++;
 			}
@@ -158,12 +156,12 @@ public class PowerStomp extends Power<PowerStomp.Data> {
 			pos = ascendTree(w, log, pos, false);
 			if (level < 10 && isWoodOrLeaf(w, log, pos)) {
 				IBlockState state = w.getBlockState(pos);
-				if (state.getBlock() instanceof BlockLeaves && w.getBlockState(pos.down()).getBlock().getMaterial() == Material.air) {
-					w.playAuxSFX(2001, pos, Block.getStateId(state));
+				if (state.getBlock() instanceof BlockLeaves && w.getBlockState(pos.down()).getMaterial() == Material.AIR) {
+					w.playEvent(2001, pos, Block.getStateId(state));
 					EntityItem item = new EntityItem(w);
 					item.setPosition(pos.getX() + 0.5, pos.getY() - 0.5, pos.getZ() + 0.5);
-					item.setEntityItemStack(new ItemStack(Items.apple, 1, getAppleMeta(w, log)));
-					w.spawnEntityInWorld(item);
+					item.setItem(new ItemStack(Items.APPLE, 1, getAppleMeta(w, log)));
+					w.spawnEntity(item);
 				}
 				dropApplesPart(done, w, log, pos.up(), level + 1);
 				dropApplesPart(done, w, log, pos.north(), level + 1);
@@ -269,7 +267,7 @@ public class PowerStomp extends Power<PowerStomp.Data> {
 	}*/
 	
 	private Object getVariant(IBlockState state) {
-		for (Entry<IProperty, ?> i : (ImmutableSet<Entry<IProperty, ?>>)state.getProperties().entrySet()) {
+		for (Entry<IProperty<?>, ?> i : state.getProperties().entrySet()) {
 			if (i.getKey().getName().contentEquals("variant")) {
 				return i.getValue();
 			}
@@ -288,8 +286,8 @@ public class PowerStomp extends Power<PowerStomp.Data> {
 		if (data.hitType == 0) {
 			player.addVelocity(0, -6, 0);
 			BlockPos pos = player.getPosition();
-			AxisAlignedBB box = AxisAlignedBB.fromBounds(player.posX - rad, player.posY - rad, player.posZ - rad, player.posX + rad, player.posY + rad, player.posZ + rad);
-			List<Entity> entities = player.worldObj.getEntitiesWithinAABBExcludingEntity(player, box);
+			AxisAlignedBB box = new AxisAlignedBB(player.posX - rad, player.posY - rad, player.posZ - rad, player.posX + rad, player.posY + rad, player.posZ + rad);
+			List<Entity> entities = player.world.getEntitiesWithinAABBExcludingEntity(player, box);
 			for (Entity i : entities) {
 				double dist = Math.sqrt(i.getDistanceSq(pos));
 				if (dist <= rad + 3) {
@@ -307,7 +305,7 @@ public class PowerStomp extends Power<PowerStomp.Data> {
 			Iterable<BlockPos> area = BlockPos.getAllInBox(pos.add(-rad, -rad, -rad), pos.add(rad, rad, rad));
 			for (BlockPos i : area) {
 				if (i.distanceSqToCenter(player.posX, player.posY, player.posZ) <= rad*rad) {
-					spawnEffect(player.worldObj, i);
+					spawnEffect(player.world, i);
 				}
 			}
 			for (int i = 1; i < 202; i+= 2) {
@@ -315,10 +313,10 @@ public class PowerStomp extends Power<PowerStomp.Data> {
 			}
 			TakeFromPlayer(player, 4);
 		} else if (data.hitType == 1) {
-			if (player.worldObj.rand.nextInt(30) == 0) {
-				removeTree(player.worldObj, new BlockPos(data.x, data.y, data.z));
+			if (player.world.rand.nextInt(30) == 0) {
+				removeTree(player.world, new BlockPos(data.x, data.y, data.z));
 			} else {
-				dropApples(player.worldObj, new BlockPos(data.x, data.y, data.z));
+				dropApples(player.world, new BlockPos(data.x, data.y, data.z));
 			}
 			TakeFromPlayer(player, 1);
 		}
@@ -326,9 +324,9 @@ public class PowerStomp extends Power<PowerStomp.Data> {
 	
 	private void spawnEffect(World w, BlockPos pos) {
 		IBlockState state = w.getBlockState(pos);
-		if (state.getBlock() != Blocks.air) {
-			if (w.getBlockState(pos.up()).getBlock() == Blocks.air) {
-				w.playAuxSFX(AuxilaryEffects.BLOCK_BREAK.getId(), pos, Block.getStateId(state));
+		if (state.getBlock() != Blocks.AIR) {
+			if (w.getBlockState(pos.up()).getBlock() == Blocks.AIR) {
+				w.playEvent(AuxilaryEffects.BLOCK_BREAK.getId(), pos, Block.getStateId(state));
 			}
 		}
 	}
@@ -340,7 +338,7 @@ public class PowerStomp extends Power<PowerStomp.Data> {
 	public void postApply(EntityPlayer player) {
 		PlayerExtension prop = PlayerExtension.get(player);
 		int timeDiff = getCooldownTime(prop) - prop.getCooldownRemaining();
-		if (player.worldObj.getWorldTime() % 1 == 0 || timeDiff == 0) {
+		if (player.world.getWorldTime() % 1 == 0 || timeDiff == 0) {
 			spawnParticleRing2(player, timeDiff);
 		}
 	}
@@ -352,11 +350,11 @@ public class PowerStomp extends Power<PowerStomp.Data> {
 			
 			double y = 0.5 + (Math.sin(animationTicks) * 1.5);
 			
-			ParticleData data = ParticleData.get(EnumParticleTypes.BLOCK_CRACK, false, Block.getStateId(Blocks.dirt.getDefaultState()));
+			ParticleData data = ParticleData.get(EnumParticleTypes.BLOCK_CRACK, false, Block.getStateId(Blocks.DIRT.getDefaultState()));
 			
 			data.setVel(0, y * 5, 0);
 			
-			ApiParticles.spawnParticleShape(data, player.worldObj, player.posX, player.posY + y, player.posZ, shape, 1);
+			ApiParticles.spawnParticleShape(data, player.world, player.posX, player.posY + y, player.posZ, shape, 1);
 		}
 	}
 	
@@ -367,9 +365,9 @@ public class PowerStomp extends Power<PowerStomp.Data> {
 			
 			double y = 0.5 + (Math.sin(animationTicks) * 1.5);
 			
-			ParticleData data = ParticleData.get(EnumParticleTypes.BLOCK_CRACK, false, Block.getStateId(Blocks.dirt.getDefaultState()));
+			ParticleData data = ParticleData.get(EnumParticleTypes.BLOCK_CRACK, false, Block.getStateId(Blocks.DIRT.getDefaultState()));
 			
-			ApiParticles.spawnParticleShape(data, player.worldObj, player.posX, player.posY + y, player.posZ, shape, 1);
+			ApiParticles.spawnParticleShape(data, player.world, player.posX, player.posY + y, player.posZ, shape, 1);
 		}
 	}
 	

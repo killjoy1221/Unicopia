@@ -12,6 +12,7 @@ import net.minecraft.block.Block;
 import net.minecraft.block.BlockBush;
 import net.minecraft.block.BlockDirt;
 import net.minecraft.block.BlockLeaves;
+import net.minecraft.block.BlockRedstoneWire;
 import net.minecraft.block.BlockSilverfish;
 import net.minecraft.block.BlockStoneBrick;
 import net.minecraft.block.BlockWall;
@@ -23,11 +24,14 @@ import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
+import net.minecraft.init.SoundEvents;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.BlockPos;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.BlockPos.MutableBlockPos;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumParticleTypes;
+import net.minecraft.util.SoundCategory;
 import net.minecraft.world.World;
 
 public class SpellFire extends Spell implements IUseAction, IDispenceable {
@@ -37,35 +41,35 @@ public class SpellFire extends Spell implements IUseAction, IDispenceable {
 	protected static final IStateMapping snowConversion = new IStateMapping() {
 		public boolean canConvert(IBlockState state) {
 			Block id = state.getBlock();
-			return id == Blocks.snow_layer || id == Blocks.snow;
+			return id == Blocks.SNOW_LAYER || id == Blocks.SNOW;
 		}
 		public IBlockState getConverted(IBlockState state) {
-			return Blocks.air.getDefaultState();
+			return Blocks.AIR.getDefaultState();
 		}
 	};
 	
 	static {
-		affected.add(Blocks.obsidian, Blocks.lava);
+		affected.add(Blocks.OBSIDIAN, Blocks.LAVA);
 		affected.add(snowConversion);
 		affected.add(new IStateMapping() {
 			public boolean canConvert(IBlockState state) {
 				return state.getBlock() instanceof BlockBush;
 			}
 			public IBlockState getConverted(IBlockState state) {
-				return Blocks.air.getDefaultState();
+				return Blocks.AIR.getDefaultState();
 			}
 		});
-		affected.add(Blocks.grass, Blocks.dirt);
-		affected.add(Blocks.mossy_cobblestone, Blocks.cobblestone);
-		affected.add(Blocks.cobblestone_wall, Blocks.cobblestone_wall).setDataRelated().setData(BlockWall.EnumType.MOSSY.getMetadata(), BlockWall.EnumType.NORMAL.getMetadata());
-		affected.add(Blocks.stonebrick, Blocks.stonebrick).setDataRelated().setData(BlockStoneBrick.MOSSY_META, BlockStoneBrick.DEFAULT_META);
-		affected.add(Blocks.monster_egg, Blocks.monster_egg).setDataRelated().setData(BlockSilverfish.EnumType.MOSSY_STONEBRICK.getMetadata(), BlockSilverfish.EnumType.STONEBRICK.getMetadata());
-		affected.add(Blocks.dirt, Blocks.dirt).setDataRelated().setData(BlockDirt.DirtType.PODZOL.getMetadata(), 0);
+		affected.add(Blocks.GRASS, Blocks.DIRT);
+		affected.add(Blocks.MOSSY_COBBLESTONE, Blocks.COBBLESTONE);
+		affected.add(Blocks.COBBLESTONE_WALL, Blocks.COBBLESTONE_WALL).setDataRelated().setData(BlockWall.EnumType.MOSSY.getMetadata(), BlockWall.EnumType.NORMAL.getMetadata());
+		affected.add(Blocks.STONEBRICK, Blocks.STONEBRICK).setDataRelated().setData(BlockStoneBrick.MOSSY_META, BlockStoneBrick.DEFAULT_META);
+		affected.add(Blocks.MONSTER_EGG, Blocks.MONSTER_EGG).setDataRelated().setData(BlockSilverfish.EnumType.MOSSY_STONEBRICK.getMetadata(), BlockSilverfish.EnumType.STONEBRICK.getMetadata());
+		affected.add(Blocks.DIRT, Blocks.DIRT).setDataRelated().setData(BlockDirt.DirtType.PODZOL.getMetadata(), 0);
 	}
 	
 	public void renderAt(EntitySpell source, World w, double x, double y, double z, int level) {
 		for (int i = 0; i < 2; ++i) {
-            source.worldObj.spawnParticle(EnumParticleTypes.SMOKE_LARGE, x + Math.random() - 0.5, y + Math.random() - 0.5, z + Math.random() - 0.5, 0, 0, 0);
+            source.getEntityWorld().spawnParticle(EnumParticleTypes.SMOKE_LARGE, x + Math.random() - 0.5, y + Math.random() - 0.5, z + Math.random() - 0.5, 0, 0, 0);
         }
 	}
 	
@@ -74,7 +78,7 @@ public class SpellFire extends Spell implements IUseAction, IDispenceable {
 		if (player == null || player.isSneaking()) {
 			result = applyBlocks(player, world, pos);
 		} else {
-			Iterable<BlockPos> iter = BlockPos.getAllInBoxMutable(pos.add(-4, -4, -4), pos.add(4, 4, 4));
+			Iterable<MutableBlockPos> iter = BlockPos.getAllInBoxMutable(pos.add(-4, -4, -4), pos.add(4, 4, 4));
 			
 			for (BlockPos i : iter) {
 				result |= applyBlocks(player, world, i);
@@ -92,7 +96,7 @@ public class SpellFire extends Spell implements IUseAction, IDispenceable {
 	@Override
 	public ActionResult onDispenced(BlockPos pos, EnumFacing facing, IBlockSource source) {
 		pos = pos.add(facing.getFrontOffsetX() * 4, facing.getFrontOffsetY() * 4, facing.getFrontOffsetZ() * 4);
-		Iterable<BlockPos> iter = BlockPos.getAllInBoxMutable(pos.add(-4, -4, -4), pos.add(4, 4, 4));
+		Iterable<MutableBlockPos> iter = BlockPos.getAllInBoxMutable(pos.add(-4, -4, -4), pos.add(4, 4, 4));
 		boolean result = false;
 		for (BlockPos i : iter) {
 			result |= applyBlocks(null, source.getWorld(), i);
@@ -109,31 +113,31 @@ public class SpellFire extends Spell implements IUseAction, IDispenceable {
 		IBlockState state = world.getBlockState(pos);
 		Block id = state.getBlock();
 		
-		if (id != Blocks.air) {
-			if (id == Blocks.ice || id == Blocks.packed_ice) {
-				world.setBlockState(pos, (world.provider.doesWaterVaporize() ? Blocks.air : Blocks.water).getDefaultState());
+		if (id != Blocks.AIR) {
+			if (id == Blocks.ICE || id == Blocks.PACKED_ICE) {
+				world.setBlockState(pos, (world.provider.doesWaterVaporize() ? Blocks.AIR : Blocks.WATER).getDefaultState());
 				playEffect(world, pos);
 				return true;
-			} else if (id == Blocks.netherrack) {
-				if (world.getBlockState(pos.up()).getBlock().getMaterial() == Material.air) {
+			} else if (id == Blocks.NETHERRACK) {
+				if (world.getBlockState(pos.up()).getMaterial() == Material.AIR) {
 					if (world.rand.nextInt(300) == 0) {
-						world.setBlockState(pos.up(), Blocks.fire.getDefaultState());
+						world.setBlockState(pos.up(), Blocks.FIRE.getDefaultState());
 					}
 					return true;
 				}
-			} else if (id == Blocks.redstone_wire) {
+			} else if (id == Blocks.REDSTONE_WIRE) {
 				int power = world.rand.nextInt(5) == 3 ? 15 : 3;
 				sendPower(world, pos, power, 3, 0);
 				return true;
-			} else if (id == Blocks.sand && world.rand.nextInt(10) == 0) {
+			} else if (id == Blocks.SAND && world.rand.nextInt(10) == 0) {
 				if (isSurroundedBySand(world, pos)) {
-					world.setBlockState(pos, Blocks.glass.getDefaultState());
+					world.setBlockState(pos, Blocks.GLASS.getDefaultState());
 					playEffect(world, pos);
 					return true;
 				}
 			} else if (id instanceof BlockLeaves) {
-				if (world.getBlockState(pos.up()).getBlock().getMaterial() == Material.air) {
-					world.setBlockState(pos.up(), Blocks.fire.getDefaultState());
+				if (world.getBlockState(pos.up()).getMaterial() == Material.AIR) {
+					world.setBlockState(pos.up(), Blocks.FIRE.getDefaultState());
 					playEffect(world, pos);
 					return true;
 				}
@@ -176,10 +180,13 @@ public class SpellFire extends Spell implements IUseAction, IDispenceable {
 	}
 	
 	private void sendPower(World w, BlockPos pos, int power, int max, int i) {
-		Block id = w.getBlockState(pos).getBlock();
-		if (i < max && id == Blocks.redstone_wire) {
+		IBlockState state = w.getBlockState(pos);
+		Block id = state.getBlock();
+		if (i < max && id == Blocks.REDSTONE_WIRE) {
 			i++;
-			w.setBlockState(pos, id.getStateFromMeta(power));
+			
+			w.setBlockState(pos, state.withProperty(BlockRedstoneWire.POWER, power));
+			
 			sendPower(w, pos.up(), power, max, i);
 			sendPower(w, pos.down(), power, max, i);
 			sendPower(w, pos.north(), power, max, i);
@@ -193,7 +200,8 @@ public class SpellFire extends Spell implements IUseAction, IDispenceable {
 		int x = pos.getX();
 		int y = pos.getY();
 		int z = pos.getZ();
-		world.playSoundEffect((double)((float)x + 0.5F), (double)((float)y + 0.5F), (double)((float)z + 0.5F), "random.fizz", 0.5F, 2.6F + (world.rand.nextFloat() - world.rand.nextFloat()) * 0.8F);
+		world.playSound((double)((float)x + 0.5F), (double)((float)y + 0.5F), (double)((float)z + 0.5F), SoundEvents.BLOCK_FURNACE_FIRE_CRACKLE, SoundCategory.AMBIENT, 0.5F, 2.6F + (world.rand.nextFloat() - world.rand.nextFloat()) * 0.8F, true);
+		
 		
         for (int i = 0; i < 8; ++i) {
             world.spawnParticle(EnumParticleTypes.SMOKE_LARGE, (double)x + Math.random(), (double)y + Math.random(), (double)z + Math.random(), 0.0D, 0.0D, 0.0D);
@@ -208,6 +216,6 @@ public class SpellFire extends Spell implements IUseAction, IDispenceable {
 	
 	public static boolean isSand(World world, BlockPos pos) {
 		Block id = world.getBlockState(pos).getBlock();
-		return id == Blocks.sand || id == Blocks.glass;
+		return id == Blocks.SAND || id == Blocks.GLASS;
 	}
 }

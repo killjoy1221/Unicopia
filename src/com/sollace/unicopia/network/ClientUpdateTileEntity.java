@@ -10,14 +10,14 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.INetHandler;
 import net.minecraft.network.PacketBuffer;
-import net.minecraft.util.BlockPos;
+import net.minecraft.util.math.BlockPos;
 
 public class ClientUpdateTileEntity implements IMessageHandler<ClientUpdateTileEntity.Message, IMessage, INetHandler> {
 
 	@Override
 	public IMessage onMessage(Message message, INetHandler net) {
 		if (message.nbt != null) {
-			Minecraft.getMinecraft().theWorld.getTileEntity(message.pos).readFromNBT(message.nbt);
+			Minecraft.getMinecraft().world.getTileEntity(message.pos).readFromNBT(message.nbt);
 		}
 		return null;
 	}
@@ -41,7 +41,7 @@ public class ClientUpdateTileEntity implements IMessageHandler<ClientUpdateTileE
 			PacketBuffer pbuf = new PacketBuffer(buf);
 			pos = pbuf.readBlockPos();
 			try {
-				nbt = pbuf.readNBTTagCompoundFromBuffer();
+				nbt = pbuf.readCompoundTag();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -51,7 +51,7 @@ public class ClientUpdateTileEntity implements IMessageHandler<ClientUpdateTileE
 		public void toBytes(ByteBuf buf) {
 			PacketBuffer pbuf = new PacketBuffer(buf);
 			pbuf.writeBlockPos(pos);
-			pbuf.writeNBTTagCompoundToBuffer(nbt);
+			pbuf.writeCompoundTag(nbt);
 		}
 		
 	}

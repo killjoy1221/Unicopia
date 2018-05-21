@@ -11,6 +11,7 @@ import com.sollace.util.StateMapList;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockBush;
 import net.minecraft.block.BlockLeaves;
+import net.minecraft.block.BlockSnow;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.dispenser.IBlockSource;
 import net.minecraft.entity.Entity;
@@ -18,7 +19,7 @@ import net.minecraft.entity.item.EntityTNTPrimed;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.BlockPos;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumParticleTypes;
@@ -32,22 +33,22 @@ public class SpellIce extends Spell implements IUseAction, IDispenceable {
 		affected.add(new IStateMapping() {
 			public boolean canConvert(IBlockState state) {
 				Block id = state.getBlock();
-				return id == Blocks.flowing_water || id == Blocks.water;
+				return id == Blocks.FLOWING_WATER || id == Blocks.WATER;
 			}
 			public IBlockState getConverted(IBlockState state) {
-				return Blocks.ice.getDefaultState();
+				return Blocks.ICE.getDefaultState();
 			}
 		});
 		affected.add(new IStateMapping() {
 			public boolean canConvert(IBlockState state) {
 				Block id = state.getBlock();
-				return id == Blocks.flowing_lava || id == Blocks.lava;
+				return id == Blocks.FLOWING_LAVA || id == Blocks.LAVA;
 			}
 			public IBlockState getConverted(IBlockState state) {
-				return Blocks.obsidian.getDefaultState();
+				return Blocks.OBSIDIAN.getDefaultState();
 			}
 		});
-		affected.add(Blocks.fire, Blocks.air);
+		affected.add(Blocks.FIRE, Blocks.AIR);
 	}
 	
 	protected int rad = 3;
@@ -80,8 +81,8 @@ public class SpellIce extends Spell implements IUseAction, IDispenceable {
 	private boolean applyBlocks(EntityPlayer owner, World world, BlockPos pos) {
 		IBlockState state = world.getBlockState(pos);
 		Block id = state.getBlock();
-		if (id == Blocks.redstone_wire) {
-			world.setBlockState(pos, Blocks.redstone_wire.getDefaultState(), 3);
+		if (id == Blocks.REDSTONE_WIRE) {
+			world.setBlockState(pos, Blocks.REDSTONE_WIRE.getDefaultState(), 3);
 		} else {
 			int x, y, z;
 			
@@ -110,7 +111,7 @@ public class SpellIce extends Spell implements IUseAction, IDispenceable {
 	protected void applyEntitySingle(EntityPlayer owner, Entity e) {
 		if (e instanceof EntityTNTPrimed) {
 			e.setDead();
-			e.worldObj.setBlockState(e.getPosition(), Blocks.tnt.getDefaultState());
+			e.getEntityWorld().setBlockState(e.getPosition(), Blocks.TNT.getDefaultState());
 		} else {
 			if (e.isBurning()) {
 				e.extinguish();
@@ -129,18 +130,18 @@ public class SpellIce extends Spell implements IUseAction, IDispenceable {
 		if (converted != null) {
 			world.setBlockState(pos, converted, 3);
 		} else {
-			if (id == Blocks.snow_layer) {
-				int meta = id.getMetaFromState(state) + 1;
-				if (meta > 7) {
-					world.setBlockState(pos, Blocks.snow.getDefaultState(), 3);
+			if (id == Blocks.SNOW_LAYER) {
+				state = state.cycleProperty(BlockSnow.LAYERS);
+				if (state.getValue(BlockSnow.LAYERS) >= 7) {
+					world.setBlockState(pos, Blocks.SNOW.getDefaultState(), 3);
 				} else {
-					world.setBlockState(pos, id.getStateFromMeta(meta), 3);
+					world.setBlockState(pos, state, 3);
 				}
-			} else if (id.getMaterial() != Materials.cloud && World.doesBlockHaveSolidTopSurface(world, pos) || (id == Blocks.snow) || (id instanceof BlockLeaves)) {
+			} else if (state.getMaterial() != Materials.cloud && state.isTopSolid() || (id == Blocks.SNOW) || (id instanceof BlockLeaves)) {
 				incrementIce(world, pos.up());
-			} else if (id == Blocks.ice && world.rand.nextInt(10) == 0) {
+			} else if (id == Blocks.ICE && world.rand.nextInt(10) == 0) {
 				if (isSurroundedByIce(world, pos)) {
-					world.setBlockState(pos, Blocks.packed_ice.getDefaultState());
+					world.setBlockState(pos, Blocks.PACKED_ICE.getDefaultState());
 				}
 			}
 		}
@@ -155,14 +156,14 @@ public class SpellIce extends Spell implements IUseAction, IDispenceable {
 	
 	public static boolean isIce(World world, BlockPos pos) {
 		Block id = world.getBlockState(pos).getBlock();
-		return id == Blocks.ice || id == Blocks.packed_ice;
+		return id == Blocks.ICE || id == Blocks.PACKED_ICE;
 	}
 	
 	private void incrementIce(World world, BlockPos pos) {
 		IBlockState state = world.getBlockState(pos);
 		Block id = state.getBlock();
-		if (id == Blocks.air || (id instanceof BlockBush)) {
-			world.setBlockState(pos, Blocks.snow_layer.getDefaultState(), 3);
+		if (id == Blocks.AIR || (id instanceof BlockBush)) {
+			world.setBlockState(pos, Blocks.SNOW_LAYER.getDefaultState(), 3);
 		}
 	}
 }

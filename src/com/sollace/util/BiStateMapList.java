@@ -10,7 +10,8 @@ import net.minecraft.block.state.IBlockState;
  * 
  */
 public class BiStateMapList extends ArrayList<IBiStateMapping> {
-	
+	private static final long serialVersionUID = 8581932914073604166L;
+
 	/**
 	 * Adds a new mapping from one block to the other. Returns the mapping object to allow specifying metadata mapping.
 	 * @param from	Block to map from
@@ -103,6 +104,7 @@ public class BiStateMapList extends ArrayList<IBiStateMapping> {
 			return result;
 		}
 		
+		@SuppressWarnings("deprecation")
 		public IBlockState getReverted(IBlockState state) {
 			return getFrom().getStateFromMeta(getFromData(state.getBlock().getMetaFromState(state)));
 		}

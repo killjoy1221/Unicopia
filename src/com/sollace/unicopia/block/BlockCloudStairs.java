@@ -2,12 +2,14 @@ package com.sollace.unicopia.block;
 
 import java.util.List;
 
+import javax.annotation.Nullable;
+
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockStairs;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
-import net.minecraft.util.AxisAlignedBB;
-import net.minecraft.util.BlockPos;
+import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 
@@ -24,12 +26,13 @@ public class BlockCloudStairs extends BlockStairs {
 		useNeighborBrightness = true;
 	}
 	
-    public boolean isVisuallyOpaque() {
-        return theBlock.isVisuallyOpaque();
+	public boolean isTranslucent(IBlockState state) {
+        return true;
     }
     
-    public boolean isNormalCube() {
-    	return theBlock.isNormalCube();
+    @SuppressWarnings("deprecation")
+	public boolean isNormalCube(IBlockState state) {
+    	return theBlock.isNormalCube(state);
     }
     
     public boolean isPassable(IBlockAccess worldIn, BlockPos pos) {
@@ -48,13 +51,13 @@ public class BlockCloudStairs extends BlockStairs {
 		theBlock.onEntityCollidedWithBlock(w, pos, theState, entity);
 	}
 	
-	public void onEntityCollidedWithBlock(World w, BlockPos pos, Entity entity) {
-		theBlock.onEntityCollidedWithBlock(w, pos, entity);
+	public void onEntityWalk(World w, BlockPos pos, Entity entity) {
+		theBlock.onEntityWalk(w, pos, entity);
 	}
 	
-    public void addCollisionBoxesToList(World w, BlockPos pos, IBlockState state, AxisAlignedBB axis, List list, Entity entity) {
+	public void addCollisionBoxToList(IBlockState state, World worldIn, BlockPos pos, AxisAlignedBB entityBox, List<AxisAlignedBB> collidingBoxes, @Nullable Entity entity, boolean p_185477_7_) {
         if (BlockCloud.getCanInteract(theState, entity)) {
-	        super.addCollisionBoxesToList(w, pos, state, axis, list, entity);
+	        super.addCollisionBoxToList(state, worldIn, pos, entityBox, collidingBoxes, entity, p_185477_7_);
         }
     }
 }

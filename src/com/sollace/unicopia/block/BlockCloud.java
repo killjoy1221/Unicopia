@@ -2,38 +2,41 @@ package com.sollace.unicopia.block;
 
 import java.util.List;
 
+import javax.annotation.Nullable;
+
 import com.sollace.unicopia.Race;
 import com.sollace.unicopia.entity.EntityCloud;
 import com.sollace.unicopia.server.PlayerSpeciesRegister;
 
 import net.minecraft.block.Block;
+import net.minecraft.block.SoundType;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.properties.IProperty;
 import net.minecraft.block.properties.PropertyEnum;
-import net.minecraft.block.state.BlockState;
+import net.minecraft.block.state.BlockStateContainer;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.AxisAlignedBB;
-import net.minecraft.util.BlockPos;
-import net.minecraft.util.EnumWorldBlockLayer;
+import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.IStringSerializable;
+import net.minecraft.util.NonNullList;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 
 public class BlockCloud extends Block {
 	
-	public static final PropertyEnum VARIANT = PropertyEnum.create("variant", EnumType.class);
+	public static final PropertyEnum<EnumType> VARIANT = PropertyEnum.create("variant", EnumType.class);
 	
 	public BlockCloud(Material material, String name) {
 		super(material);
-		setCreativeTab(CreativeTabs.tabMisc);
+		setCreativeTab(CreativeTabs.MISC);
 		setHardness(0.5f);
 		setResistance(1.0F);
-		setStepSound(soundTypeCloth);
+		setSoundType(SoundType.CLOTH);
 		setLightOpacity(20);
 		setUnlocalizedName(name);
 		setDefaultState(blockState.getBaseState().withProperty(VARIANT, EnumType.NORMAL));
@@ -41,41 +44,44 @@ public class BlockCloud extends Block {
 	}
 	
 	//Render inside?
-    public boolean isVisuallyOpaque() {
-        return false;
+    public boolean isTranslucent(IBlockState state) {
+        return true;
     }
     
     //Render blocks behind?
-    public boolean isOpaqueCube() {
+    public boolean isOpaqueCube(IBlockState state) {
         return false;
     }
     
     //Push player out of block
-    public boolean isFullCube() {
+    public boolean isFullCube(IBlockState state) {
         return true;//false;
     }
     
-    public boolean isNormalCube() {
+    public boolean isNormalCube(IBlockState state) {
     	return false;
     }
     
-    public EnumWorldBlockLayer getBlockLayer() {
-        return EnumWorldBlockLayer.CUTOUT_MIPPED;
+    public BlockRenderLayer getBlockLayer() {
+        return BlockRenderLayer.CUTOUT_MIPPED;
     }
     
     //Can entities walk through?
-    public boolean isPassable(IBlockAccess worldIn, BlockPos pos) {
-        return super.isPassable(worldIn, pos);
+    @Override
+    public boolean isPassable(IBlockAccess w, BlockPos pos) {
+        return super.isPassable(w, pos);
     }
 	
-    public void onFallenUpon(World worldIn, BlockPos pos, Entity entityIn, float fallDistance) {
+    @Override
+    public void onFallenUpon(World world, BlockPos pos, Entity entityIn, float fallDistance) {
         if (entityIn.isSneaking()) {
-            super.onFallenUpon(worldIn, pos, entityIn, fallDistance);
+            super.onFallenUpon(world, pos, entityIn, fallDistance);
         } else {
             entityIn.fall(fallDistance, 0);
         }
     }
     
+    @Override
     public void onLanded(World worldIn, Entity entityIn) {
         if (entityIn.isSneaking()) {
             super.onLanded(worldIn, entityIn);
@@ -84,22 +90,21 @@ public class BlockCloud extends Block {
         }
     }
     
-	public void onEntityCollidedWithBlock(World w, BlockPos pos, Entity entity) {
+    @Override
+	public void onEntityCollidedWithBlock(World w, BlockPos pos, IBlockState state, Entity entity) {
 		if (!entity.isSneaking() && Math.abs(entity.motionY) >= 0.25d) {
 			entity.motionY += 0.0155*(entity.fallDistance < 1 ? 1 : entity.fallDistance);
 		} else {
 			entity.motionY = 0;
 		}
-		super.onEntityCollidedWithBlock(w, pos, entity);
+		super.onEntityCollidedWithBlock(w, pos, state, entity);
 	}
     
-    public void addCollisionBoxesToList(World w, BlockPos pos, IBlockState state, AxisAlignedBB p_149743_5_, List p_149743_6_, Entity entity) {
-		if (getCanInteract(state, entity)) {
-			AxisAlignedBB axisalignedbb1 = AxisAlignedBB.fromBounds(pos.getX() + minX, pos.getY() + minY, pos.getZ() + minZ, pos.getX() + maxX, pos.getY() + maxY - 0.1, pos.getZ() + maxZ);
-	        if (axisalignedbb1 != null && p_149743_5_.intersectsWith(axisalignedbb1)) {
-	            p_149743_6_.add(axisalignedbb1);
-	        }
-		}
+    @Deprecated
+    public void addCollisionBoxToList(IBlockState state, World worldIn, BlockPos pos, AxisAlignedBB entityBox, List<AxisAlignedBB> collidingBoxes, @Nullable Entity entity, boolean p_185477_7_) {
+    	if (getCanInteract(state, entity)) {
+    		super.addCollisionBoxToList(state, worldIn, pos, entityBox, collidingBoxes, entity, p_185477_7_);
+    	}
     }
     
 	public static boolean getCanInteract(IBlockState state, Entity e) {
@@ -112,8 +117,8 @@ public class BlockCloud extends Block {
 			Race species = PlayerSpeciesRegister.getPlayerSpecies((EntityPlayer)e);
 			return species.canInteractWithClouds() || EntityCloud.getFeatherEnchantStrength((EntityPlayer)e) > 0;
 		}
-		if (e instanceof EntityCloud && e.riddenByEntity != null) {
-			return getCanInteract(state, e.riddenByEntity);
+		if (e instanceof EntityCloud && e.isRiding()) {
+			return getCanInteract(state, e.getRidingEntity());
 		}
 		return false;
 	}
@@ -122,9 +127,9 @@ public class BlockCloud extends Block {
         return ((EnumType)state.getValue(VARIANT)).getMetadata();
     }
     
-    public void getSubBlocks(Item itemIn, CreativeTabs tab, List list) {
+    public void getSubBlocks(CreativeTabs tab, NonNullList<ItemStack> list) {
         for (EnumType i : EnumType.values()) {
-        	list.add(new ItemStack(itemIn, 1, i.getMetadata()));
+        	list.add(new ItemStack(this, 1, i.getMetadata()));
         }
     }
 
@@ -136,8 +141,8 @@ public class BlockCloud extends Block {
         return ((BlockCloud.EnumType)state.getValue(VARIANT)).getMetadata();
     }
 
-    protected BlockState createBlockState() {
-        return new BlockState(this, new IProperty[] {VARIANT});
+    protected BlockStateContainer createBlockState() {
+        return new BlockStateContainer(this, new IProperty[] {VARIANT});
     }
 	
 	public static enum EnumType implements IStringSerializable {

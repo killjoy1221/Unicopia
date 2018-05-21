@@ -4,7 +4,7 @@ import java.util.List;
 
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.IEntityLivingData;
-import net.minecraft.util.AxisAlignedBB;
+import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.World;
 
@@ -19,7 +19,7 @@ public class EntityCloudNatural extends EntityCloud {
     
     public boolean isNotColliding() {
     	AxisAlignedBB boundingbox = getEntityBoundingBox();
-    	return checkNoEntityCollision(boundingbox, this) && worldObj.getCollidingBoundingBoxes(this, boundingbox).isEmpty() && !worldObj.isAnyLiquid(boundingbox);
+    	return checkNoEntityCollision(boundingbox, this) && world.getCollisionBoxes(this, boundingbox).isEmpty() && !world.containsAnyLiquid(boundingbox);
     }
     
     /**
@@ -28,9 +28,9 @@ public class EntityCloudNatural extends EntityCloud {
      * @ref World.checkNoEntityCollision(AxisAlignedBB area, Entity entity)
      */
     public boolean checkNoEntityCollision(AxisAlignedBB area, Entity entity) {
-        List<Entity> list = worldObj.getEntitiesWithinAABBExcludingEntity(null, area);
+        List<Entity> list = world.getEntitiesWithinAABBExcludingEntity(null, area);
         for (Entity i : list) {
-            if (!i.isDead && (i.preventEntitySpawning || i instanceof EntityCloud) && i != entity && (entity == null || entity.ridingEntity != i && entity.riddenByEntity != i)) {
+            if (!i.isDead && (i.preventEntitySpawning || i instanceof EntityCloud) && i != entity && (!entity.isRiding() || !entity.isRidingOrBeingRiddenBy(i))) {
                 return false;
             }
         }
