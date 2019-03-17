@@ -5,6 +5,7 @@ import java.util.function.Supplier;
 
 import javax.annotation.Nullable;
 
+import com.minelittlepony.unicopia.Unicopia;
 import com.minelittlepony.unicopia.edibles.IEdible;
 import com.minelittlepony.unicopia.edibles.Toxicity;
 import com.minelittlepony.unicopia.init.UItems;
@@ -15,12 +16,18 @@ import net.minecraft.block.BlockPlanks;
 import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.item.EntityItem;
+import net.minecraft.init.Items;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemFood;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumParticleTypes;
 import net.minecraft.util.NonNullList;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
+import net.minecraftforge.event.entity.item.ItemExpireEvent;
+import net.minecraftforge.event.entity.player.ItemTooltipEvent;
+import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 public class ItemApple extends ItemFood implements IEdible {
 
@@ -50,7 +57,7 @@ public class ItemApple extends ItemFood implements IEdible {
                     .put(1, () -> new ItemStack(UItems.rotten_apple))
                     .put(2, () -> new ItemStack(UItems.sweet_apple))
                     .put(5, () -> new ItemStack(UItems.zap_apple)
-            )
+                    )
     );
 
     public static ItemStack getRandomItemStack(Object variant) {
@@ -65,55 +72,9 @@ public class ItemApple extends ItemFood implements IEdible {
 
         setTranslationKey(name);
 
-        if (!"minecraft".contentEquals(domain)) {
-            setRegistryName(domain, name);
-        }
+        setRegistryName(domain, name);
     }
 
-    @Override
-    public boolean onEntityItemUpdate(EntityItem item) {
-
-            if (!item.isDead && item.ticksExisted > item.lifespan * 0.9) {
-
-                if (!item.world.isRemote) {
-                    item.setDead();
-
-                    EntityItem neu = new EntityItem(item.world);
-                    neu.copyLocationAndAnglesFrom(item);
-                    neu.setItem(new ItemStack(UItems.rotten_apple));
-
-                    item.world.spawnEntity(neu);
-
-                    EntityItem copy = new EntityItem(item.world);
-                    copy.copyLocationAndAnglesFrom(item);
-                    copy.setItem(item.getItem());
-                    copy.getItem().shrink(1);
-
-                    item.world.spawnEntity(copy);
-                } else {
-                    float bob = MathHelper.sin(((float)item.getAge() + 1) / 10F + item.hoverStart) * 0.1F + 0.1F;
-
-                    for (int i = 0; i < 3; i++) {
-                        item.world.spawnParticle(EnumParticleTypes.SPELL_MOB, item.posX, item.posY + bob, item.posZ,
-                                item.world.rand.nextGaussian() - 0.5F,
-                                item.world.rand.nextGaussian() - 0.5F,
-                                item.world.rand.nextGaussian() - 0.5F);
-                    }
-                }
-            }
-
-        return false;
-    }
-
-    @Override
-    public void getSubItems(CreativeTabs tab, NonNullList<ItemStack> items) {
-        if (this == UItems.red_apple && isInCreativeTab(tab)) {
-            items.add(new ItemStack(this));
-            items.add(new ItemStack(UItems.green_apple));
-            items.add(new ItemStack(UItems.sweet_apple));
-            items.add(new ItemStack(UItems.sour_apple));
-        }
-    }
 
     @Override
     public void addInformation(ItemStack stack, @Nullable World worldIn, List<String> tooltip, ITooltipFlag flagIn) {
@@ -123,5 +84,51 @@ public class ItemApple extends ItemFood implements IEdible {
     @Override
     public Toxicity getToxicityLevel(ItemStack stack) {
         return Toxicity.SAFE;
+    }
+
+    @Mod.EventBusSubscriber(modid = Unicopia.MODID)
+    public static class AppleEvents {
+
+        @SubscribeEvent
+        public static void onAddInfo(ItemTooltipEvent event) {
+            if (event.getItemStack().getItem() == Items.APPLE) {
+                event.getToolTip().add(Toxicity.SAFE.getTooltip());
+            }
+        }
+
+        @SubscribeEvent
+        public static void onItemExpire(ItemExpireEvent event) {
+            EntityItem item = event.getEntityItem();
+            Item apple = item.getItem().getItem();
+            if (apple == Items.APPLE || apple instanceof ItemApple && apple != UItems.rotten_apple) {
+                if (item.world.isRemote) {
+
+                    EntityItem neu = new EntityItem(item.world);
+                    neu.copyLocationAndAnglesFrom(item);
+                    neu.setItem(new ItemStack(UItems.rotten_apple));
+
+                    item.world.spawnEntity(neu);
+
+                    item.getItem().shrink(1);
+                    event.setExtraLife(600 );
+
+                    EntityItem copy = new EntityItem(item.world);
+                    copy.copyLocationAndAnglesFrom(item);
+                    copy.setItem(item.getItem());
+                    copy.getItem().shrink(1);
+
+                    item.world.spawnEntity(copy);
+                } else {
+                    float bob = MathHelper.sin(((float) item.getAge() + 1) / 10F + item.hoverStart) * 0.1F + 0.1F;
+
+                    for (int i = 0; i < 3; i++) {
+                        item.world.spawnParticle(EnumParticleTypes.SPELL_MOB, item.posX, item.posY + bob, item.posZ,
+                                item.world.rand.nextGaussian() - 0.5F,
+                                item.world.rand.nextGaussian() - 0.5F,
+                                item.world.rand.nextGaussian() - 0.5F);
+                    }
+                }
+            }
+        }
     }
 }

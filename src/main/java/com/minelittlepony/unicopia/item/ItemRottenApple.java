@@ -1,9 +1,7 @@
 package com.minelittlepony.unicopia.item;
 
-import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.NonNullList;
 
 public class ItemRottenApple extends ItemApple {
 
@@ -19,12 +17,5 @@ public class ItemRottenApple extends ItemApple {
     @Override
     public boolean onEntityItemUpdate(EntityItem item) {
         return false;
-    }
-
-    @Override
-    public void getSubItems(CreativeTabs tab, NonNullList<ItemStack> items) {
-        if (isInCreativeTab(tab)) {
-            items.add(new ItemStack(this));
-        }
     }
 }

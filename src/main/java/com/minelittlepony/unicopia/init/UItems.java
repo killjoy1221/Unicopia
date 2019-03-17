@@ -63,7 +63,7 @@ import com.minelittlepony.unicopia.forgebullshit.RegistryLockSpinner;
 import com.minelittlepony.unicopia.forgebullshit.UnFuckedItemSnow;
 
 public class UItems {
-    public static final ItemApple red_apple = new ItemApple("minecraft", "apple");
+    public static final ItemApple red_apple = new ItemApple(Unicopia.MODID, "red_apple");
     public static final ItemApple green_apple = new ItemApple(Unicopia.MODID, "apple_green");
     public static final ItemApple sweet_apple = new ItemApple(Unicopia.MODID, "apple_sweet");
     public static final ItemApple sour_apple = new ItemApple(Unicopia.MODID, "apple_sour");
@@ -235,7 +235,7 @@ public class UItems {
 
     static void init(IForgeRegistry<Item> registry) {
         RegistryLockSpinner.open(Item.REGISTRY, Items.class, r -> r
-                .replace(Items.APPLE, red_apple)
+//                .replace(Items.APPLE, red_apple)
                 .replace(Items.STICK, stick)
                 .replace(Item.getItemFromBlock(Blocks.TALLGRASS), tall_grass)
                 .replace(Item.getItemFromBlock(Blocks.DOUBLE_PLANT), double_plant)
@@ -243,7 +243,7 @@ public class UItems {
                 .replace(Item.getItemFromBlock(Blocks.RED_FLOWER), red_flower));
 
         registry.registerAll(
-                green_apple, sweet_apple, sour_apple,
+                red_apple, green_apple, sweet_apple, sour_apple,
                 cloud_spawner, dew_drop, cloud_matter, cloud_block, enchanted_cloud, packed_cloud,
                 cloud_stairs,
                 cloud_slab, enchanted_cloud_slab, packed_cloud_slab,
@@ -272,7 +272,7 @@ public class UItems {
             ItemModels.registerAll(
                     cloud_spawner,
 
-                    green_apple, sweet_apple, sour_apple,
+                    red_apple, green_apple, sweet_apple, sour_apple,
 
                     zap_apple,
                     rotten_apple, cooked_zap_apple, dew_drop,

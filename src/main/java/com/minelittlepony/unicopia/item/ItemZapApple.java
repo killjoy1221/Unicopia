@@ -69,13 +69,6 @@ public class ItemZapApple extends ItemAppleMultiType {
     }
 
     @Override
-    public void getSubItems(CreativeTabs tab, NonNullList<ItemStack> items) {
-        if (isInCreativeTab(tab)) {
-            items.add(new ItemStack(this, 1, 0));
-        }
-    }
-
-    @Override
     public Toxicity getToxicityLevel(ItemStack stack) {
         return stack.getMetadata() == 0 ? Toxicity.SEVERE : Toxicity.SAFE;
     }
