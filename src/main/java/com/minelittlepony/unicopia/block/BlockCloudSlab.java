@@ -64,12 +64,12 @@ public abstract class BlockCloudSlab<T extends Block & ICloudBlock> extends USla
 
     public static class Single<T extends Block & ICloudBlock> extends BlockCloudSlab<T> {
 
-        public final Double<T> doubleSlab;
+        public final BlockCloudSlab.Double<T> doubleSlab;
 
         public Single(T modelBlock, Material material, String domain, String name) {
             super(modelBlock, null, material, domain, name);
 
-            doubleSlab = new Double<>(this, domain, "double_" + name);
+            doubleSlab = new BlockCloudSlab.Double<>(this, domain, "double_" + name);
         }
 
         @Override
@@ -114,9 +114,9 @@ public abstract class BlockCloudSlab<T extends Block & ICloudBlock> extends USla
 
     public static class Double<T extends Block & ICloudBlock> extends BlockCloudSlab<T> {
 
-        public final Single<T> singleSlab;
+        public final BlockCloudSlab.Single<T> singleSlab;
 
-        public Double(Single<T> single, String domain, String name) {
+        public Double(BlockCloudSlab.Single<T> single, String domain, String name) {
             super(single.modelBlock, single, single.material, domain, name);
 
             this.singleSlab = single;
