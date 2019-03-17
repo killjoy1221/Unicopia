@@ -1,6 +1,6 @@
 package com.minelittlepony.unicopia.entity;
 
-import com.minelittlepony.unicopia.UClient;
+import com.minelittlepony.unicopia.Unicopia;
 import com.minelittlepony.unicopia.player.IOwned;
 import com.mojang.authlib.GameProfile;
 
@@ -40,7 +40,7 @@ public class EntityFakeServerPlayer extends FakePlayer implements IOwned<EntityP
 
     @Override
     public boolean getAlwaysRenderNameTag() {
-        return !UClient.instance().isClientPlayer(getOwner());
+        return !Unicopia.proxy.isClientPlayer(getOwner());
     }
 
     @Override

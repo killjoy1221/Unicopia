@@ -31,12 +31,12 @@ class ClientHooks {
     public static void postEntityRender(RenderLivingEvent.Post<?> event) {
         GlStateManager.enableAlpha();
 
-        UClient.instance().postRenderEntity(event.getEntity());
+        Unicopia.proxy.postRenderEntity(event.getEntity());
     }
 
     @SubscribeEvent
     public static void preEntityRender(RenderLivingEvent.Pre<?> event) {
-        if (UClient.instance().renderEntity(event.getEntity(), event.getPartialRenderTick())) {
+        if (Unicopia.proxy.renderEntity(event.getEntity(), event.getPartialRenderTick())) {
             event.setCanceled(true);
         }
     }
@@ -51,7 +51,7 @@ class ClientHooks {
     @SubscribeEvent
     public static void onGameTick(TickEvent.ClientTickEvent event) {
         if (event.phase == Phase.END) {
-            UClient.instance().tick();
+            Unicopia.proxy.tick();
         }
     }
 
@@ -61,7 +61,7 @@ class ClientHooks {
             return;
         }
 
-        IPlayer player = UClient.instance().getIPlayer();
+        IPlayer player = Unicopia.proxy.getIPlayer();
         if (player != null && Minecraft.getMinecraft().world != null) {
             UHud.instance.renderHud(player, event.getResolution());
         }
@@ -75,7 +75,7 @@ class ClientHooks {
     @SubscribeEvent
     public static void setupPlayerCamera(EntityViewRenderEvent.CameraSetup event) {
 
-        IPlayer player = UClient.instance().getIPlayer();
+        IPlayer player = Unicopia.proxy.getIPlayer();
 
         if (player != null) {
             IView view = player.getCamera();

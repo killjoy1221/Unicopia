@@ -7,7 +7,7 @@ import javax.annotation.Nullable;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
-import com.minelittlepony.unicopia.UClient;
+import com.minelittlepony.unicopia.Unicopia;
 import com.minelittlepony.unicopia.player.IPlayer;
 import com.minelittlepony.unicopia.player.PlayerSpeciesList;
 import com.minelittlepony.unicopia.spell.SpellAffinity;
@@ -120,7 +120,7 @@ public class ItemAlicornAmulet extends ItemArmor implements IDependable {
 
     @Override
     public void addInformation(ItemStack stack, @Nullable World worldIn, List<String> tooltip, ITooltipFlag flagIn) {
-        IPlayer iplayer = UClient.instance().getIPlayer();
+        IPlayer iplayer = Unicopia.proxy.getIPlayer();
 
         if (iplayer != null) {
             int attachedTime = iplayer.getInventory().getTicksAttached(this);

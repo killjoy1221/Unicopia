@@ -8,6 +8,7 @@ import net.minecraft.world.biome.Biome;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventHandler;
+import net.minecraftforge.fml.common.SidedProxy;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
@@ -58,6 +59,9 @@ public class Unicopia implements IGuiHandler {
 
     private static IChannel channel;
 
+    @SidedProxy(serverSide = "com.minelittlepony.unicopia.UClient", clientSide = "com.minelittlepony.unicopia.UnicopiaClient")
+    public static UClient proxy;
+
     private static CraftingManager craftingManager = new CraftingManager(MODID, "enchanting") {
         @Override
         protected void registerRecipeTypes(Map<String, Function<JsonObject, IRecipe>> types) {
@@ -81,7 +85,7 @@ public class Unicopia implements IGuiHandler {
     @EventHandler
     public void preInit(FMLPreInitializationEvent event) {
         UConfig.init(event.getModConfigurationDirectory());
-        UClient.instance().preInit();
+        proxy.preInit();
         UWorld.instance().init();
 
         MinecraftForge.TERRAIN_GEN_BUS.register(Hooks.class);
@@ -112,7 +116,7 @@ public class Unicopia implements IGuiHandler {
 
         NetworkRegistry.INSTANCE.registerGuiHandler(this, this);
 
-        UClient.instance().init();
+        proxy.init();
     }
 
     @EventHandler
@@ -122,7 +126,7 @@ public class Unicopia implements IGuiHandler {
         Pages.instance().load();
 
         Biome.REGISTRY.forEach(UEntities::registerSpawnEntries);
-        UClient.instance().posInit();
+        proxy.posInit();
 
         UItems.fixRecipes();
     }

@@ -198,7 +198,7 @@ public class UnicopiaClient extends UClient {
     }
 
     public void tick() {
-        EntityPlayer player = UClient.instance().getPlayer();
+        EntityPlayer player = Unicopia.proxy.getPlayer();
 
         if (player != null && !player.isDead) {
             Race newRace = getclientPlayerRace();

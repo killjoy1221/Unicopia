@@ -6,7 +6,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import com.minelittlepony.unicopia.Race;
-import com.minelittlepony.unicopia.UClient;
+import com.minelittlepony.unicopia.Unicopia;
 import com.minelittlepony.unicopia.init.UParticles;
 import com.minelittlepony.unicopia.mixin.MixinEntity;
 import com.minelittlepony.unicopia.player.IFlyingPredicate;
@@ -140,7 +140,7 @@ public class SpellDisguise extends AbstractSpell implements IAttachedEffect, ISu
     protected synchronized void createPlayer(NBTTagCompound nbt, GameProfile profile, ICaster<?> source) {
         removeDisguise();
 
-        entity = UClient.instance().createPlayer(source.getEntity(), profile);
+        entity = Unicopia.proxy.createPlayer(source.getEntity(), profile);
         entity.setCustomNameTag(source.getOwner().getName());
         ((EntityPlayer)entity).readFromNBT(nbt.getCompoundTag("playerNbt"));
         entity.setUniqueId(UUID.randomUUID());
@@ -393,7 +393,7 @@ public class SpellDisguise extends AbstractSpell implements IAttachedEffect, ISu
                 entity.getDataManager().set(MixinEntity.Player.getModelFlag(), owner.getDataManager().get(MixinEntity.Player.getModelFlag()));
             }
 
-            if (player.isClientPlayer() && UClient.instance().getViewMode() == 0) {
+            if (player.isClientPlayer() && Unicopia.proxy.getViewMode() == 0) {
                 entity.setInvisible(true);
                 entity.posY = -Integer.MIN_VALUE;
             }

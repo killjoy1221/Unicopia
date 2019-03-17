@@ -18,23 +18,8 @@ import net.minecraft.world.WorldServer;
 
 public class UClient {
 
-    private static UClient instance;
-
     public static boolean isClientSide() {
         return net.minecraftforge.fml.common.FMLCommonHandler.instance().getSide().isClient();
-    }
-
-    @FUF(reason = "Forced client Separation")
-    public static UClient instance() {
-        if (instance == null) {
-            if (isClientSide()) {
-                instance = new UnicopiaClient();
-            } else {
-                instance = new UClient();
-            }
-        }
-
-        return instance;
     }
 
     @FUF(reason = "Forced client Separation")

@@ -2,7 +2,7 @@ package com.minelittlepony.unicopia.item;
 
 import javax.annotation.Nullable;
 
-import com.minelittlepony.unicopia.UClient;
+import com.minelittlepony.unicopia.Unicopia;
 import com.minelittlepony.unicopia.edibles.ItemEdible;
 import com.minelittlepony.unicopia.edibles.Toxicity;
 import com.minelittlepony.unicopia.player.PlayerSpeciesList;
@@ -64,7 +64,7 @@ public class ItemMoss extends ItemEdible {
                     e instanceof IShearable && ((IShearable)e).isShearable(stack, w, pos)
             )) {
                 if (player == null) {
-                    player = UClient.instance().createPlayer(e, new GameProfile(null, "Notch"));
+                    player = Unicopia.proxy.createPlayer(e, new GameProfile(null, "Notch"));
                 }
 
                 if (stack.interactWithEntity(player, e, EnumHand.MAIN_HAND)) {

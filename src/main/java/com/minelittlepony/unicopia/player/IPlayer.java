@@ -5,7 +5,7 @@ import java.util.UUID;
 import javax.annotation.Nullable;
 
 import com.minelittlepony.model.anim.IInterpolator;
-import com.minelittlepony.unicopia.UClient;
+import com.minelittlepony.unicopia.Unicopia;
 import com.minelittlepony.unicopia.enchanting.IPageOwner;
 import com.minelittlepony.unicopia.network.ITransmittable;
 import com.minelittlepony.unicopia.spell.ICaster;
@@ -152,14 +152,14 @@ public interface IPlayer extends ICaster<EntityPlayer>, IRaceContainer<EntityPla
      * Returns true if this player is the use.
      */
     default boolean isClientPlayer() {
-        return UClient.instance().isClientPlayer(getOwner());
+        return Unicopia.proxy.isClientPlayer(getOwner());
     }
 
     static EntityPlayer getPlayerFromServer(UUID playerId) {
         MinecraftServer server = FMLCommonHandler.instance().getMinecraftServerInstance();
 
         if (server == null) {
-            return UClient.instance().getPlayerByUUID(playerId);
+            return Unicopia.proxy.getPlayerByUUID(playerId);
         }
 
         Entity e = server.getEntityFromUuid(playerId);

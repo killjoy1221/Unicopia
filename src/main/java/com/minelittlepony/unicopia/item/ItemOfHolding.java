@@ -7,7 +7,7 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 import com.minelittlepony.unicopia.Predicates;
-import com.minelittlepony.unicopia.UClient;
+import com.minelittlepony.unicopia.Unicopia;
 import com.minelittlepony.unicopia.inventory.ContainerOfHolding;
 import com.minelittlepony.unicopia.inventory.InventoryOfHolding;
 import com.minelittlepony.unicopia.spell.SpellAffinity;
@@ -115,7 +115,7 @@ public class ItemOfHolding extends Item implements IMagicalItem {
             return new ActionResult<>(EnumActionResult.FAIL, stack);
         }
 
-        UClient.instance().displayGuiToPlayer(player, new Inventory(stack));
+        Unicopia.proxy.displayGuiToPlayer(player, new Inventory(stack));
 
         player.playSound(SoundEvents.BLOCK_ENDERCHEST_OPEN, 0.5F, 1);
 

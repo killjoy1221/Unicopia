@@ -2,7 +2,7 @@ package com.minelittlepony.unicopia.block;
 
 import com.minelittlepony.unicopia.CloudType;
 import com.minelittlepony.unicopia.Predicates;
-import com.minelittlepony.unicopia.UClient;
+import com.minelittlepony.unicopia.Unicopia;
 import com.minelittlepony.unicopia.forgebullshit.FUF;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockBed;
@@ -26,7 +26,7 @@ public interface ICloudBlock {
 
     default boolean handleRayTraceSpecialCases(World world, BlockPos pos, IBlockState state) {
         if (world.isRemote) {
-            EntityPlayer player = UClient.instance().getPlayer();
+            EntityPlayer player = Unicopia.proxy.getPlayer();
 
             if (player.capabilities.isCreativeMode) {
                 return false;

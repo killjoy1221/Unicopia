@@ -1,6 +1,5 @@
 package com.minelittlepony.unicopia.render;
 
-import com.minelittlepony.unicopia.UClient;
 import com.minelittlepony.unicopia.Unicopia;
 import com.minelittlepony.unicopia.entity.EntityCuccoon;
 import com.minelittlepony.unicopia.model.ModelCuccoon;
@@ -36,7 +35,7 @@ public class RenderCuccoon extends RenderLivingBase<EntityCuccoon> {
         if (entity.isBeingRidden()) {
             Entity rider = entity.getPassengers().get(0);
 
-            if (!(rider == Minecraft.getMinecraft().player) || UClient.instance().getViewMode() != 0) {
+            if (!(rider == Minecraft.getMinecraft().player) || Unicopia.proxy.getViewMode() != 0) {
                 GlStateManager.enableAlpha();
                 GlStateManager.enableBlend();
 

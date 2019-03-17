@@ -12,7 +12,6 @@ import com.minelittlepony.jumpingcastle.api.IChannel;
 import com.minelittlepony.jumpingcastle.api.IMessage;
 import com.minelittlepony.jumpingcastle.api.IMessageHandler;
 import com.minelittlepony.unicopia.Race;
-import com.minelittlepony.unicopia.UClient;
 import com.minelittlepony.unicopia.Unicopia;
 import com.minelittlepony.unicopia.player.IPlayer;
 import com.minelittlepony.unicopia.player.PlayerSpeciesList;
@@ -54,7 +53,7 @@ public class MsgPlayerCapabilities implements IMessage, IMessageHandler<MsgPlaye
 
     @Override
     public void onPayload(MsgPlayerCapabilities message, IChannel channel) {
-        EntityPlayer self = UClient.instance().getPlayerByUUID(senderId);
+        EntityPlayer self = Unicopia.proxy.getPlayerByUUID(senderId);
 
         if (self == null) {
             Unicopia.log.warn("[Unicopia] [CLIENT] [MsgPlayerCapabilities] Player with id %s was not found!\n", senderId.toString());

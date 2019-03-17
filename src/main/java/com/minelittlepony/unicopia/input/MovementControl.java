@@ -1,6 +1,6 @@
 package com.minelittlepony.unicopia.input;
 
-import com.minelittlepony.unicopia.UClient;
+import com.minelittlepony.unicopia.Unicopia;
 import com.minelittlepony.unicopia.forgebullshit.FUF;
 import com.minelittlepony.unicopia.player.IPlayer;
 
@@ -42,7 +42,7 @@ public class MovementControl extends MovementInputFromOptions {
         this.jump = wrappedInstance.jump;
         this.sneak = wrappedInstance.sneak;
 
-        IPlayer player = UClient.instance().getIPlayer();
+        IPlayer player = Unicopia.proxy.getIPlayer();
 
         if (player.getGravity().getGravitationConstant() < 0) {
             boolean tmp = leftKeyDown;
