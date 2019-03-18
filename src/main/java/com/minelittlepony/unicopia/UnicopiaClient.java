@@ -7,7 +7,6 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import com.minelittlepony.gui.Button;
-import com.minelittlepony.jumpingcastle.api.Target;
 import com.minelittlepony.unicopia.entity.EntityFakeClientPlayer;
 import com.minelittlepony.unicopia.extern.MineLP;
 import com.minelittlepony.unicopia.gui.GuiScreenSettings;
@@ -18,6 +17,7 @@ import com.minelittlepony.unicopia.input.MouseControl;
 import com.minelittlepony.unicopia.input.MovementControl;
 import com.minelittlepony.unicopia.inventory.gui.GuiOfHolding;
 import com.minelittlepony.unicopia.network.MsgRequestCapabilities;
+import com.minelittlepony.unicopia.network.UNetworkHandler;
 import com.minelittlepony.unicopia.player.IPlayer;
 import com.minelittlepony.unicopia.player.PlayerSpeciesList;
 import com.minelittlepony.unicopia.render.DisguiseRenderer;
@@ -206,7 +206,7 @@ public class UnicopiaClient extends UClient {
             if (newRace != clientPlayerRace) {
                 clientPlayerRace = newRace;
 
-                Unicopia.getConnection().send(new MsgRequestCapabilities(player, clientPlayerRace), Target.SERVER);
+                UNetworkHandler.INSTANCE.sendToServer(new MsgRequestCapabilities(clientPlayerRace));
             }
         }
 

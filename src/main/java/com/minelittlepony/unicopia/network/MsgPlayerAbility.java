@@ -1,56 +1,80 @@
 package com.minelittlepony.unicopia.network;
 
-import java.util.UUID;
-
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.annotations.Expose;
-import com.minelittlepony.jumpingcastle.api.IChannel;
-import com.minelittlepony.jumpingcastle.api.IMessage;
-import com.minelittlepony.jumpingcastle.api.IMessageHandler;
 import com.minelittlepony.unicopia.player.IPlayer;
 import com.minelittlepony.unicopia.player.PlayerSpeciesList;
 import com.minelittlepony.unicopia.power.IData;
 import com.minelittlepony.unicopia.power.IPower;
 import com.minelittlepony.unicopia.power.PowersRegistry;
-
+import io.netty.buffer.ByteBuf;
+import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.network.PacketBuffer;
+import net.minecraft.util.IThreadListener;
+import net.minecraftforge.fml.client.FMLClientHandler;
+import net.minecraftforge.fml.common.FMLCommonHandler;
+import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
+import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
+import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
 
-@IMessage.Id(2)
-public class MsgPlayerAbility implements IMessage, IMessageHandler<MsgPlayerAbility> {
+public class MsgPlayerAbility implements IMessage {
 
-    private static final Gson gson = new GsonBuilder()
+    static final Gson gson = new GsonBuilder()
             .excludeFieldsWithoutExposeAnnotation()
             .create();
 
-    @Expose
-    private UUID senderId;
-
-    @Expose
     private String powerIdentifier;
-
-    @Expose
     private String abilityJson;
 
+    public MsgPlayerAbility() {
+    }
+
     public MsgPlayerAbility(EntityPlayer player, IPower<?> power, IData data) {
-        senderId = player.getUniqueID();
         powerIdentifier = power.getKeyName();
         abilityJson = gson.toJson(data, power.getPackageType());
     }
 
-    private <T extends IData> void apply(IPower<T> power) {
-        IPlayer player = PlayerSpeciesList.instance().getPlayer(senderId);
-        if (player == null) {
-            return;
-        }
-
-        T data = gson.fromJson(abilityJson, power.getPackageType());
-
-        power.apply(player, data);
+    @Override
+    public void fromBytes(ByteBuf buf) {
+        PacketBuffer packet = new PacketBuffer(buf);
+        powerIdentifier = packet.readString(30);
+        abilityJson = packet.readString(Short.MAX_VALUE);
     }
 
     @Override
-    public void onPayload(MsgPlayerAbility message, IChannel channel) {
-        PowersRegistry.instance().getPowerFromName(powerIdentifier).ifPresent(this::apply);
+    public void toBytes(ByteBuf buf) {
+        PacketBuffer packet = new PacketBuffer(buf);
+        packet.writeString(powerIdentifier);
+        packet.writeString(abilityJson);
+    }
+
+    public String getAbilityJson() {
+        return abilityJson;
+    }
+
+    public String getPowerIdentifier() {
+        return powerIdentifier;
+    }
+
+    public static class Handler implements IMessageHandlerSync<MsgPlayerAbility> {
+
+        @Override
+        public void onMessageSync(MsgPlayerAbility message, MessageContext ctx) {
+            PowersRegistry.instance().getPowerFromName(message.getPowerIdentifier())
+                    .ifPresent(power -> handleAbility(power, message, ctx));
+
+        }
+
+        private static <T extends IData> void handleAbility(IPower<T> power, MsgPlayerAbility message, MessageContext ctx) {
+            IPlayer player = PlayerSpeciesList.instance().getPlayer(ctx.getServerHandler().player);
+            if (player == null) {
+                return;
+            }
+
+            T data = MsgPlayerAbility.gson.fromJson(message.getAbilityJson(), power.getPackageType());
+
+            power.apply(player, data);
+        }
     }
 }

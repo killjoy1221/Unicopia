@@ -1,5 +1,6 @@
 package com.minelittlepony.unicopia;
 
+import com.minelittlepony.unicopia.network.UNetworkHandler;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.crafting.IRecipe;
 import net.minecraft.util.math.BlockPos;
@@ -23,8 +24,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.google.gson.JsonObject;
-import com.minelittlepony.jumpingcastle.api.IChannel;
-import com.minelittlepony.jumpingcastle.api.JumpingCastle;
 import com.minelittlepony.unicopia.advancements.UAdvancements;
 import com.minelittlepony.unicopia.command.Commands;
 import com.minelittlepony.unicopia.enchanting.AffineIngredients;
@@ -36,9 +35,6 @@ import com.minelittlepony.unicopia.init.UEntities;
 import com.minelittlepony.unicopia.init.UItems;
 import com.minelittlepony.unicopia.inventory.gui.ContainerSpellBook;
 import com.minelittlepony.unicopia.inventory.gui.GuiSpellBook;
-import com.minelittlepony.unicopia.network.MsgPlayerAbility;
-import com.minelittlepony.unicopia.network.MsgPlayerCapabilities;
-import com.minelittlepony.unicopia.network.MsgRequestCapabilities;
 import com.minelittlepony.unicopia.power.PowersRegistry;
 import com.minelittlepony.unicopia.util.crafting.CraftingManager;
 import com.minelittlepony.unicopia.world.Hooks;
@@ -47,8 +43,8 @@ import com.minelittlepony.unicopia.world.UWorld;
 @Mod(
     modid = Unicopia.MODID,
     name = Unicopia.NAME,
-    version = Unicopia.VERSION,
-    dependencies = "required-after:jumpingcastle;after:baubles"
+    version = Unicopia.VERSION
+//    dependencies = "required:baubles"
 )
 public class Unicopia implements IGuiHandler {
     public static final String MODID = "unicopia";
@@ -56,8 +52,6 @@ public class Unicopia implements IGuiHandler {
     public static final String VERSION = "@VERSION@";
 
     public static final Logger log = LogManager.getLogger();
-
-    private static IChannel channel;
 
     @SidedProxy(serverSide = "com.minelittlepony.unicopia.UClient", clientSide = "com.minelittlepony.unicopia.UnicopiaClient")
     public static UClient proxy;
@@ -78,12 +72,12 @@ public class Unicopia implements IGuiHandler {
         return craftingManager;
     }
 
-    public static IChannel getConnection() {
-        return channel;
-    }
-
     @EventHandler
     public void preInit(FMLPreInitializationEvent event) {
+        // initialize network
+        UNetworkHandler.init();
+
+
         UConfig.init(event.getModConfigurationDirectory());
         proxy.preInit();
         UWorld.instance().init();
@@ -103,10 +97,6 @@ public class Unicopia implements IGuiHandler {
 
     @EventHandler
     public void init(FMLInitializationEvent event) {
-        channel = JumpingCastle.subscribeTo(MODID, () -> {})
-            .listenFor(MsgRequestCapabilities.class)
-            .listenFor(MsgPlayerCapabilities.class)
-            .listenFor(MsgPlayerAbility.class);
 
         PowersRegistry.instance().init();
 

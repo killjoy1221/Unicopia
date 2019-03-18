@@ -70,7 +70,6 @@ repositories {
   }
 }
 dependencies {
-  deobfCompile('com.minelittlepony:jumpingcastle:1.12.2.1.0.0:universal')
   // compile against the JEI API but do not include it at runtime
   deobfProvided "mezz.jei:jei_${project.mcVersion}:${project.jeiVersion}:api"
   // at runtime, use the full JEI jar

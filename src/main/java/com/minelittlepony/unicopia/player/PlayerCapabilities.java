@@ -8,7 +8,6 @@ import com.google.common.collect.Maps;
 import com.minelittlepony.model.anim.BasicEasingInterpolator;
 import com.minelittlepony.model.anim.IInterpolator;
 import com.minelittlepony.unicopia.Race;
-import com.minelittlepony.unicopia.Unicopia;
 import com.minelittlepony.unicopia.enchanting.PageState;
 import com.minelittlepony.unicopia.entity.EntityCuccoon;
 import com.minelittlepony.unicopia.init.UEffects;
@@ -16,6 +15,7 @@ import com.minelittlepony.unicopia.init.UItems;
 import com.minelittlepony.unicopia.item.ICastable;
 import com.minelittlepony.unicopia.network.EffectSync;
 import com.minelittlepony.unicopia.network.MsgPlayerCapabilities;
+import com.minelittlepony.unicopia.network.UNetworkHandler;
 import com.minelittlepony.unicopia.spell.IAttachedEffect;
 import com.minelittlepony.unicopia.spell.IHeldEffect;
 import com.minelittlepony.unicopia.spell.IMagicEffect;
@@ -182,9 +182,9 @@ class PlayerCapabilities implements IPlayer {
 
         if (!getWorld().isRemote) {
             if (full) {
-                Unicopia.getConnection().broadcast(new MsgPlayerCapabilities(this));
+                UNetworkHandler.INSTANCE.sendToAll(new MsgPlayerCapabilities(getPlayerSpecies(), toNBT()));
             } else {
-                Unicopia.getConnection().broadcast(new MsgPlayerCapabilities(getPlayerSpecies(), getOwner()));
+                UNetworkHandler.INSTANCE.sendToAll(new MsgPlayerCapabilities(getPlayerSpecies(), new NBTTagCompound()));
             }
         }
     }

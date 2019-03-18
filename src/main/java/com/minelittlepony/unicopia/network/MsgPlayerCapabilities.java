@@ -1,75 +1,75 @@
 package com.minelittlepony.unicopia.network;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.util.UUID;
-
-import com.google.gson.annotations.Expose;
-import com.minelittlepony.jumpingcastle.api.IChannel;
-import com.minelittlepony.jumpingcastle.api.IMessage;
-import com.minelittlepony.jumpingcastle.api.IMessageHandler;
 import com.minelittlepony.unicopia.Race;
-import com.minelittlepony.unicopia.Unicopia;
 import com.minelittlepony.unicopia.player.IPlayer;
 import com.minelittlepony.unicopia.player.PlayerSpeciesList;
-
+import io.netty.buffer.ByteBuf;
+import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.nbt.CompressedStreamTools;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.network.PacketBuffer;
+import net.minecraftforge.fml.client.FMLClientHandler;
+import net.minecraftforge.fml.common.FMLCommonHandler;
+import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
+import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
+import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
 
-@IMessage.Id(1)
-public class MsgPlayerCapabilities implements IMessage, IMessageHandler<MsgPlayerCapabilities> {
-    @Expose
-    public Race newRace;
+import java.io.IOException;
 
-    @Expose
-    UUID senderId;
+public class MsgPlayerCapabilities implements IMessage {
 
-    @Expose
-    byte[] compoundTag;
+    private Race race;
+    private NBTTagCompound tag;
 
-    public MsgPlayerCapabilities(Race race, EntityPlayer player) {
-        newRace = race;
-        senderId = player.getUniqueID();
-        compoundTag = new byte[0];
+    public MsgPlayerCapabilities() {
+
     }
 
-    public MsgPlayerCapabilities(IPlayer player) {
-        newRace = player.getPlayerSpecies();
-        senderId = player.getOwner().getUniqueID();
+    public MsgPlayerCapabilities(Race race, NBTTagCompound tag) {
+        this.race = race;
+        this.tag = tag;
+    }
 
-        try (ByteArrayOutputStream bytes = new ByteArrayOutputStream()) {
-            NBTTagCompound nbt = player.toNBT();
+    @Override
+    public void fromBytes(ByteBuf buf) {
+        try {
+            PacketBuffer packet = new PacketBuffer(buf);
 
-            CompressedStreamTools.write(nbt, new DataOutputStream(bytes));
-
-            compoundTag = bytes.toByteArray();
+            race = packet.readEnumValue(Race.class);
+            tag = packet.readCompoundTag();
         } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 
     @Override
-    public void onPayload(MsgPlayerCapabilities message, IChannel channel) {
-        EntityPlayer self = Unicopia.proxy.getPlayerByUUID(senderId);
+    public void toBytes(ByteBuf buf) {
+        PacketBuffer packet = new PacketBuffer(buf);
 
-        if (self == null) {
-            Unicopia.log.warn("[Unicopia] [CLIENT] [MsgPlayerCapabilities] Player with id %s was not found!\n", senderId.toString());
-        } else {
-            IPlayer player = PlayerSpeciesList.instance().getPlayer(self);
+        packet.writeEnumValue(race);
+        packet.writeCompoundTag(tag);
+    }
 
-            if (compoundTag.length > 0) {
-                try (ByteArrayInputStream input = new ByteArrayInputStream(compoundTag)) {
-                    NBTTagCompound nbt = CompressedStreamTools.read(new DataInputStream(input));
+    public Race getRace() {
+        return race;
+    }
 
-                    player.readFromNBT(nbt);
-                } catch (IOException e) {
+    public NBTTagCompound getTag() {
+        return tag;
+    }
 
-                }
+    public static class Handler implements IMessageHandlerSync<MsgPlayerCapabilities> {
+
+        @Override
+        public void onMessageSync(MsgPlayerCapabilities message, MessageContext ctx) {
+
+            EntityPlayer p = FMLClientHandler.instance().getClient().player;
+            IPlayer player = PlayerSpeciesList.instance().getPlayer(p);
+
+            if (message.getTag().isEmpty()) {
+                player.setPlayerSpecies(message.getRace());
             } else {
-                player.setPlayerSpecies(newRace);
+                player.readFromNBT(message.getTag());
             }
         }
     }

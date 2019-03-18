@@ -3,9 +3,8 @@ package com.minelittlepony.unicopia.player;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-import com.minelittlepony.jumpingcastle.api.Target;
-import com.minelittlepony.unicopia.Unicopia;
 import com.minelittlepony.unicopia.network.MsgPlayerAbility;
+import com.minelittlepony.unicopia.network.UNetworkHandler;
 import com.minelittlepony.unicopia.power.IData;
 import com.minelittlepony.unicopia.power.IPower;
 import com.minelittlepony.unicopia.power.PowersRegistry;
@@ -158,7 +157,7 @@ class PlayerAbilityDelegate implements IAbilityReceiver, IUpdatable, InbtSeriali
         IData data = ability.tryActivate(player);
 
         if (data != null) {
-            Unicopia.getConnection().send(new MsgPlayerAbility(player.getOwner(), ability, data), Target.SERVER);
+            UNetworkHandler.INSTANCE.sendToServer(new MsgPlayerAbility(player.getOwner(), ability, data));
         }
 
         return data != null;

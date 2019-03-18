@@ -8,7 +8,6 @@ import java.util.stream.Collectors;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Queues;
-import com.minelittlepony.jumpingcastle.Exceptions;
 import com.minelittlepony.unicopia.Unicopia;
 import com.minelittlepony.unicopia.structure.CloudDungeon;
 import com.minelittlepony.unicopia.structure.GroundDungeon;
@@ -68,8 +67,11 @@ public class UWorld implements IWorldGenerator {
 
             Consumer<World> task;
             while ((task = tickTasks.poll()) != null) {
-                Consumer<World> i = task;
-                Exceptions.logged(() -> i.accept(world), Unicopia.log);
+                try {
+                    task.accept(world);
+                } catch (Throwable e) {
+                    Unicopia.log.error("Unhandled exception detected from callee.", e);
+                }
             }
         }
     }
