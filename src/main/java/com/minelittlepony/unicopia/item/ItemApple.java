@@ -101,7 +101,7 @@ public class ItemApple extends ItemFood implements IEdible {
             EntityItem item = event.getEntityItem();
             Item apple = item.getItem().getItem();
             if (apple == Items.APPLE || apple instanceof ItemApple && apple != UItems.rotten_apple) {
-                if (item.world.isRemote) {
+                if (!item.world.isRemote) {
 
                     EntityItem neu = new EntityItem(item.world);
                     neu.copyLocationAndAnglesFrom(item);
@@ -110,14 +110,10 @@ public class ItemApple extends ItemFood implements IEdible {
                     item.world.spawnEntity(neu);
 
                     item.getItem().shrink(1);
-                    event.setExtraLife(600 );
 
-                    EntityItem copy = new EntityItem(item.world);
-                    copy.copyLocationAndAnglesFrom(item);
-                    copy.setItem(item.getItem());
-                    copy.getItem().shrink(1);
+                    event.setExtraLife(300);
+                    event.setCanceled(true);
 
-                    item.world.spawnEntity(copy);
                 } else {
                     float bob = MathHelper.sin(((float) item.getAge() + 1) / 10F + item.hoverStart) * 0.1F + 0.1F;
 
