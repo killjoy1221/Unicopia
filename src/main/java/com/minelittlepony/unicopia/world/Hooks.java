@@ -1,5 +1,7 @@
 package com.minelittlepony.unicopia.world;
 
+import com.minelittlepony.unicopia.Unicopia;
+
 import net.minecraft.util.EnumActionResult;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.entity.player.UseHoeEvent;
@@ -12,7 +14,7 @@ import net.minecraftforge.fml.common.eventhandler.Event.Result;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent.Phase;
 
-@EventBusSubscriber
+@EventBusSubscriber(modid = Unicopia.MODID)
 public class Hooks {
 
     @SubscribeEvent
@@ -23,7 +25,7 @@ public class Hooks {
         }
 
         EnumActionResult result = UWorld.instance().getBlocks().onBlockInteract(
-                event.getWorld(), event.getWorld().getBlockState(event.getPos()), event.getPos(), event.getEntityPlayer(), event.getItemStack(), event.getHand());
+                event.getWorld(), event.getWorld().getBlockState(event.getPos()), event.getPos(), event.getEntityPlayer(), event.getItemStack(), event.getFace(), event.getHand());
 
         if (result != EnumActionResult.PASS) {
             event.setCanceled(true);
