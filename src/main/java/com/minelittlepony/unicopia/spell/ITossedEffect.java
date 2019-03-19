@@ -27,7 +27,7 @@ public interface ITossedEffect extends IMagicEffect, ITossable<ICaster<?>> {
      * Gets the appearance to be used when projecting this spell.
      */
     default ItemStack getCastAppearance(ICaster<?> caster) {
-        Item item = getAffinity() == SpellAffinity.BAD ? UItems.curse : UItems.spell;
+        Item item = getAffinity() == SpellAffinity.BAD ? UItems.corrupted_gem : UItems.gem;
 
         return SpellRegistry.instance().enchantStack(new ItemStack(item), getName());
     }

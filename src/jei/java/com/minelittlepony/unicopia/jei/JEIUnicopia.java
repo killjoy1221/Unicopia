@@ -22,8 +22,8 @@ public class JEIUnicopia implements IModPlugin {
 
     @Override
     public void registerItemSubtypes(ISubtypeRegistry registry) {
-        registry.registerSubtypeInterpreter(UItems.spell, SpellRegistry::getKeyFromStack);
-        registry.registerSubtypeInterpreter(UItems.curse, SpellRegistry::getKeyFromStack);
+        registry.registerSubtypeInterpreter(UItems.gem, SpellRegistry::getKeyFromStack);
+        registry.registerSubtypeInterpreter(UItems.corrupted_gem, SpellRegistry::getKeyFromStack);
     }
 
     @Override

@@ -1,8 +1,8 @@
 package com.minelittlepony.unicopia.init;
 
+import com.minelittlepony.unicopia.UClient;
 import com.minelittlepony.unicopia.Unicopia;
 
-import net.minecraft.block.Block;
 import net.minecraft.item.Item;
 import net.minecraft.potion.Potion;
 import net.minecraft.util.SoundEvent;
@@ -10,18 +10,17 @@ import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.registry.EntityEntry;
+import net.minecraftforge.registries.IForgeRegistryEntry;
+
+import javax.annotation.Nonnull;
 
 @EventBusSubscriber(modid = Unicopia.MODID)
 class Hooks {
 
-    @SubscribeEvent
-    public static void registerItems(RegistryEvent.Register<Item> event) {
-        UItems.init(event.getRegistry());
-    }
-
-    @SubscribeEvent
-    public static void registerBlocks(RegistryEvent.Register<Block> event) {
-        UBlocks.init(event.getRegistry());
+    @SuppressWarnings("ConstantConditions")
+    @Nonnull
+    static <T extends E, E extends IForgeRegistryEntry<E>> T dummy() {
+        return null;
     }
 
     @SubscribeEvent

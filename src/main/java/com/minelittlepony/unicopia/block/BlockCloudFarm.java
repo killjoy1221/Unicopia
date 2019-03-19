@@ -120,6 +120,6 @@ public class BlockCloudFarm extends UFarmland implements ICloudBlock {
 
     @Override
     protected IBlockState getDroppedState(IBlockState state) {
-        return UBlocks.normal_cloud.getDefaultState();
+        return UBlocks.cloud_block.getDefaultState();
     }
 }

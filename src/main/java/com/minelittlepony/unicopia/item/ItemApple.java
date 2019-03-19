@@ -14,14 +14,12 @@ import com.minelittlepony.util.collection.Weighted;
 
 import net.minecraft.block.BlockPlanks;
 import net.minecraft.client.util.ITooltipFlag;
-import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.init.Items;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemFood;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumParticleTypes;
-import net.minecraft.util.NonNullList;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
 import net.minecraftforge.event.entity.item.ItemExpireEvent;
@@ -34,28 +32,28 @@ public class ItemApple extends ItemFood implements IEdible {
     public static final Pool<Object, Weighted<Supplier<ItemStack>>> typeVariantMap = Pool.of(BlockPlanks.EnumType.OAK,
             BlockPlanks.EnumType.OAK, new Weighted<Supplier<ItemStack>>()
                     .put(1, () -> new ItemStack(UItems.rotten_apple))
-                    .put(2, () -> new ItemStack(UItems.green_apple))
-                    .put(3, () -> new ItemStack(UItems.red_apple)),
+                    .put(2, () -> new ItemStack(UItems.apple_green))
+                    .put(3, () -> new ItemStack(Items.APPLE)),
             BlockPlanks.EnumType.SPRUCE, new Weighted<Supplier<ItemStack>>()
-                    .put(1, () -> new ItemStack(UItems.sour_apple))
-                    .put(2, () -> new ItemStack(UItems.green_apple))
-                    .put(3, () -> new ItemStack(UItems.sweet_apple))
+                    .put(1, () -> new ItemStack(UItems.apple_sour))
+                    .put(2, () -> new ItemStack(UItems.apple_green))
+                    .put(3, () -> new ItemStack(UItems.apple_sweet))
                     .put(4, () -> new ItemStack(UItems.rotten_apple)),
             BlockPlanks.EnumType.BIRCH, new Weighted<Supplier<ItemStack>>()
                     .put(1, () -> new ItemStack(UItems.rotten_apple))
-                    .put(2, () -> new ItemStack(UItems.sweet_apple))
-                    .put(5, () -> new ItemStack(UItems.green_apple)),
+                    .put(2, () -> new ItemStack(UItems.apple_sweet))
+                    .put(5, () -> new ItemStack(UItems.apple_green)),
             BlockPlanks.EnumType.JUNGLE, new Weighted<Supplier<ItemStack>>()
-                    .put(5, () -> new ItemStack(UItems.green_apple))
-                    .put(2, () -> new ItemStack(UItems.sweet_apple))
-                    .put(1, () -> new ItemStack(UItems.sour_apple)),
+                    .put(5, () -> new ItemStack(UItems.apple_green))
+                    .put(2, () -> new ItemStack(UItems.apple_sweet))
+                    .put(1, () -> new ItemStack(UItems.apple_sour)),
             BlockPlanks.EnumType.ACACIA, new Weighted<Supplier<ItemStack>>()
                     .put(1, () -> new ItemStack(UItems.rotten_apple))
-                    .put(2, () -> new ItemStack(UItems.sweet_apple))
-                    .put(5, () -> new ItemStack(UItems.green_apple)),
+                    .put(2, () -> new ItemStack(UItems.apple_sweet))
+                    .put(5, () -> new ItemStack(UItems.apple_green)),
             BlockPlanks.EnumType.DARK_OAK, new Weighted<Supplier<ItemStack>>()
                     .put(1, () -> new ItemStack(UItems.rotten_apple))
-                    .put(2, () -> new ItemStack(UItems.sweet_apple))
+                    .put(2, () -> new ItemStack(UItems.apple_sweet))
                     .put(5, () -> new ItemStack(UItems.zap_apple)
                     )
     );

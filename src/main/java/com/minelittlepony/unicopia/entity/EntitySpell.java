@@ -122,7 +122,7 @@ public class EntitySpell extends EntityCreature implements IMagicals, ICaster<En
     }
 
     protected Item getItem() {
-        return getAffinity() == SpellAffinity.BAD ? UItems.curse : UItems.spell;
+        return getAffinity() == SpellAffinity.BAD ? UItems.corrupted_gem : UItems.gem;
     }
 
     @Override

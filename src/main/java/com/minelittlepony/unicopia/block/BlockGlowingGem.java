@@ -179,9 +179,9 @@ public class BlockGlowingGem extends BlockTorch implements ICloudBlock {
         Random rand = world instanceof World ? ((World)world).rand : RANDOM;
 
         if (rand.nextInt(10) == 0) {
-            drops.add(new ItemStack(UItems.spell));
+            drops.add(new ItemStack(UItems.gem));
         } else {
-            drops.add(new ItemStack(UItems.curse));
+            drops.add(new ItemStack(UItems.corrupted_gem));
         }
     }
 

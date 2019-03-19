@@ -80,12 +80,12 @@ public class Fixes {
 
         @Override
         protected IBlockState fixBlockState(int id, int metadata) {
-            if (id == Block.getIdFromBlock(UBlocks.normal_cloud) && metadata != 0) {
+            if (id == Block.getIdFromBlock(UBlocks.cloud_block) && metadata != 0) {
                 if (metadata == 1) {
-                    return UBlocks.packed_cloud.getDefaultState();
+                    return UBlocks.packed_cloud_block.getDefaultState();
                 }
                 if (metadata == 2) {
-                    return UBlocks.enchanted_cloud.getDefaultState();
+                    return UBlocks.enchanted_cloud_block.getDefaultState();
                 }
             }
 

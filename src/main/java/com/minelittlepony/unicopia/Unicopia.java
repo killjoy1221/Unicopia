@@ -118,7 +118,7 @@ public class Unicopia implements IGuiHandler {
         Biome.REGISTRY.forEach(UEntities::registerSpawnEntries);
         proxy.postInit();
 
-        UItems.fixRecipes();
+        UItems.registerFuels();
     }
 
     @Override
